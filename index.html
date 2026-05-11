@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>WhenFree — Find a time, no drama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0d14;
+  --surface: #17172a;
+  --surface2: #1e1e32;
+  --surface3: #252540;
+  --border: #2e2e4a;
+  --text: #f0f0fa;
+  --muted: #7878a0;
+  --accent: #ff6b35;
+  --accent2: #ffd166;
+  --avail: #06d6a0;
+  --avail-dim: rgba(6,214,160,0.15);
+  --maybe: #ffd166;
+  --maybe-dim: rgba(255,209,102,0.15);
+  --danger: #ff4757;
+  --radius: 14px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── GLOBAL ATOMS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  -webkit-user-select: none; user-select: none;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 4px 16px rgba(255,107,53,0.4);
+}
+.btn-primary:hover { box-shadow: 0 6px 24px rgba(255,107,53,0.55); }
+.btn-secondary { background: var(--surface2); color: var(--text); }
+.btn-ghost { background: transparent; color: var(--muted); padding: 8px 14px; }
+.btn-full { width: 100%; justify-content: center; padding: 14px 20px; font-size: 16px; }
+.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+.btn-avail { background: var(--avail); color: #000; box-shadow: 0 4px 16px rgba(6,214,160,0.4); }
+.btn-avail:hover { box-shadow: 0 6px 24px rgba(6,214,160,0.55); }
+
+input, textarea, select {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--text); font-family: inherit; font-size: 15px;
+  transition: border-color 0.15s ease;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--accent);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+.field { margin-bottom: 18px; }
+.row { display: flex; gap: 12px; }
+.row .field { flex: 1; }
+
+/* ── LAYOUT ── */
+.app { max-width: 680px; margin: 0 auto; padding: 24px 16px 80px; }
+
+.header {
+  text-align: center; padding: 40px 0 32px;
+}
+.logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 28px; font-weight: 800; color: var(--text);
+  text-decoration: none;
+}
+.logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.logo-sub { font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+
+.card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 24px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+
+/* ── ORGANIZER FORM ── */
+.form-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; }
+
+.calendar-wrap { position: relative; }
+.calendar {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 3px;
+  background: var(--surface2); border-radius: 10px; padding: 12px;
+}
+.cal-header { display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; }
+.cal-month { font-weight: 700; font-size: 15px; }
+.cal-nav { background: var(--surface3); border: none; color: var(--text);
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.cal-nav:hover { background: var(--border); }
+.cal-day-label { text-align: center; font-size: 11px; font-weight: 600;
+  color: var(--muted); padding: 4px 0; text-transform: uppercase; }
+.cal-day {
+  text-align: center; padding: 8px 4px; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 500; transition: all 0.12s ease;
+  border: 1.5px solid transparent; -webkit-user-select: none; user-select: none;
+}
+.cal-day:hover:not(.empty):not(.past) { background: var(--surface3); }
+.cal-day.past { color: var(--border); cursor: default; }
+.cal-day.empty { cursor: default; }
+.cal-day.range-start { background: var(--accent); color: #fff; border-radius: 8px 0 0 8px; }
+.cal-day.range-end { background: var(--accent); color: #fff; border-radius: 0 8px 8px 0; }
+.cal-day.range-start.range-end { border-radius: 8px; }
+.cal-day.in-range { background: rgba(255,107,53,0.2); border-radius: 0; }
+.cal-day.today::after {
+  content: ''; display: block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--accent); margin: 2px auto 0; position: relative; bottom: 0;
+}
+
+.time-row { display: flex; gap: 12px; align-items: center; }
+.time-select { flex: 1; }
+
+.tz-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ── SHARE PANEL ── */
+.share-panel {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1.5px solid var(--accent); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px;
+}
+.share-title { font-weight: 700; font-size: 18px; margin-bottom: 6px; }
+.share-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.share-url {
+  background: var(--bg); border-radius: 8px; padding: 10px 12px;
+  font-size: 12px; color: var(--muted); word-break: break-all;
+  margin-bottom: 12px; border: 1px solid var(--border);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.copy-row { display: flex; gap: 8px; }
+
+/* ── RESPONDENT HEADER ── */
+.event-header {
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+.event-name { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+.event-meta { font-size: 13px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.meta-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--surface3); padding: 4px 10px; border-radius: 100px;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+}
+
+/* ── TAB BAR ── */
+.tab-bar {
+  display: flex; gap: 2px; background: var(--surface2);
+  padding: 4px; border-radius: 12px; margin-bottom: 16px;
+}
+.tab {
+  flex: 1; text-align: center; padding: 9px; border-radius: 9px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+  color: var(--muted); -webkit-user-select: none; user-select: none;
+}
+.tab.active { background: var(--surface); color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+/* ── NAME INPUT ── */
+.name-section { margin-bottom: 16px; }
+.name-section .field { margin-bottom: 8px; }
+
+/* ── GRID ── */
+.grid-controls {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+}
+.grid-controls-left { display: flex; gap: 6px; }
+.legend {
+  display: flex; gap: 12px; font-size: 12px; color: var(--muted); align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+.grid-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+
+.time-grid {
+  display: grid; min-width: max-content; border-radius: 10px;
+  border: 1px solid var(--border); overflow: hidden;
+}
+.grid-corner { background: var(--surface2); padding: 8px 10px; font-size: 11px; color: var(--muted); }
+.grid-date-header {
+  background: var(--surface2); padding: 8px 10px; text-align: center;
+  font-size: 12px; font-weight: 700; border-left: 1px solid var(--border);
+  min-width: 64px; position: relative;
+}
+.grid-date-day { font-size: 11px; color: var(--muted); font-weight: 400; }
+.col-actions {
+  display: flex; gap: 3px; justify-content: center; margin-top: 4px;
+}
+.col-btn {
+  background: var(--surface3); border: none; color: var(--muted); cursor: pointer;
+  font-size: 9px; padding: 2px 5px; border-radius: 4px; font-family: inherit;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  transition: all 0.1s ease;
+}
+.col-btn:hover { background: var(--border); color: var(--text); }
+
+.grid-time-label {
+  background: var(--surface2); padding: 0 10px;
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  display: flex; align-items: center; white-space: nowrap;
+  border-top: 1px solid var(--border);
+}
+.grid-cell {
+  min-width: 64px; height: 48px; border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.12s ease; position: relative;
+  -webkit-user-select: none; user-select: none;
+}
+.grid-cell:active { transform: scale(0.9); }
+.grid-cell.avail { background: var(--avail-dim); }
+.grid-cell.maybe { background: var(--maybe-dim); }
+
+.cell-icon { font-size: 18px; line-height: 1; }
+.cell-count {
+  position: absolute; bottom: 3px; right: 4px;
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  background: var(--surface3); border-radius: 4px; padding: 1px 4px;
+  line-height: 1.4;
+}
+.cell-count.has-count { color: var(--avail); }
+
+/* Results grid */
+.grid-cell.result {
+  cursor: default; flex-direction: column; gap: 2px; justify-content: center;
+}
+.grid-cell.result:active { transform: none; }
+.cell-heat-0 { background: var(--surface2); }
+.cell-heat-1 { background: rgba(6,214,160,0.10); }
+.cell-heat-2 { background: rgba(6,214,160,0.25); }
+.cell-heat-3 { background: rgba(6,214,160,0.45); }
+.cell-heat-4 { background: rgba(6,214,160,0.65); }
+.cell-heat-5 { background: rgba(6,214,160,0.82); }
+.cell-best { outline: 2.5px solid var(--accent2); outline-offset: -2px; }
+
+.cell-result-count {
+  font-size: 14px; font-weight: 800;
+  color: var(--text); line-height: 1;
+}
+.cell-result-label { font-size: 10px; color: rgba(255,255,255,0.6); }
+
+/* tooltip */
+.tooltip {
+  position: fixed; z-index: 999; background: var(--surface3);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; pointer-events: none; max-width: 200px;
+  box-shadow: var(--shadow); display: none;
+}
+.tooltip.show { display: block; }
+.tooltip-time { font-weight: 700; margin-bottom: 6px; color: var(--accent2); }
+.tooltip-name { display: flex; align-items: center; gap: 5px; padding: 2px 0; }
+.tooltip-avail { color: var(--avail); }
+.tooltip-maybe { color: var(--maybe); }
+
+/* ── RESPONDENTS LIST ── */
+.respondents {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+}
+.respondent-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 5px 12px; font-size: 13px; font-weight: 500;
+}
+.respondent-chip.done { border-color: var(--avail); color: var(--avail); }
+.chip-dot { width: 7px; height: 7px; border-radius: 50%; }
+.chip-dot.done { background: var(--avail); }
+.chip-dot.pending { background: var(--border); }
+
+/* ── BEST SLOT BANNER ── */
+.best-slot {
+  background: linear-gradient(135deg, rgba(255,209,102,0.12), rgba(255,107,53,0.12));
+  border: 1.5px solid var(--accent2); border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 16px;
+}
+.best-slot-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--accent2); margin-bottom: 6px; }
+.best-slot-time { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.best-slot-stat { font-size: 13px; color: var(--muted); }
+
+/* ── CONFIRMATION ── */
+.confirm-card {
+  text-align: center; padding: 40px 24px;
+}
+.confirm-emoji { font-size: 56px; margin-bottom: 16px; }
+.confirm-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.confirm-sub { color: var(--muted); margin-bottom: 28px; font-size: 15px; }
+.confirm-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--surface3); color: var(--text); border: 1px solid var(--border);
+  border-radius: 100px; padding: 10px 20px; font-size: 14px; font-weight: 600;
+  box-shadow: var(--shadow); z-index: 1000; opacity: 0;
+  transition: all 0.25s ease; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── PROGRESS ── */
+.progress-bar {
+  height: 4px; background: var(--surface3); border-radius: 2px;
+  overflow: hidden; margin-bottom: 12px;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px; transition: width 0.3s ease;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes pop { 0%{transform:scale(0.8);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.fade-up { animation: fadeUp 0.35s ease forwards; }
+.pop { animation: pop 0.25s ease forwards; }
+
+/* ── FLOATING COPY BTN ── */
+.fab {
+  position: fixed; bottom: 24px; right: 20px; z-index: 100;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  color: var(--muted); border-radius: 100px; padding: 10px 16px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s ease; font-family: inherit;
+}
+.fab:hover { background: var(--surface3); color: var(--text); }
+.fab:active { transform: scale(0.95); }
+
+/* ── EMPTY ── */
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-text { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.empty-sub { color: var(--muted); font-size: 14px; }
+
+/* ── DEADLINE BADGE ── */
+.deadline-expired { color: var(--danger); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .app { padding: 16px 12px 80px; }
+  .card { padding: 18px; }
+  .header { padding: 24px 0 20px; }
+  .logo { font-size: 24px; }
+  .event-name { font-size: 20px; }
+  .row { flex-direction: column; gap: 0; }
+  .grid-cell { min-width: 54px; }
+  .grid-date-header { min-width: 54px; }
+}
+
+/* ── HIDDEN / VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+</style>
+
+<!-- Firebase compat CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div id="tooltip" class="tooltip"></div>
+<div id="toast" class="toast"></div>
+<button class="fab" id="fabCopy" onclick="copyLink()" style="display:none">🔗 Copy Link</button>
+
+<div class="app">
+  <!-- ══ ORGANIZER VIEW ══ -->
+  <div id="view-organizer" class="view">
+    <div class="header">
+      <div class="logo"><span class="logo-dot"></span>WhenFree</div>
+      <div class="logo-sub">Find a time, no drama ✨</div>
+    </div>
+
+    <div class="card fade-up">
+      <div class="form-title">Create a Poll</div>
+
+      <div class="field">
+        <label>Event Name</label>
+        <input type="text" id="org-name" placeholder="Game night, beach day, dinner…" maxlength="80">
+      </div>
+      <div class="field">
+        <label>Description (optional)</label>
+        <textarea id="org-desc" rows="2" placeholder="Any details your crew needs to know" maxlength="300" style="resize:none"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Date Range</label>
+        <div class="cal-header">
+          <button class="cal-nav" id="cal-prev">‹</button>
+          <span class="cal-month" id="cal-month-label"></span>
+          <button class="cal-nav" id="cal-next">›</button>
+        </div>
+        <div class="calendar" id="org-calendar"></div>
+        <div id="org-date-selection" style="margin-top:8px;font-size:13px;color:var(--muted)">Tap to start selecting dates</div>
+      </div>
+
+      <div class="field">
+        <label>Time Range</label>
+        <div class="time-row">
+          <select id="org-start-time" class="time-select"></select>
+          <span style="color:var(--muted);white-space:nowrap;font-size:13px">to</span>
+          <select id="org-end-time" class="time-select"></select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Time Zone</label>
+        <select id="org-tz"></select>
+        <div class="tz-hint" id="org-tz-hint"></div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Response Deadline (optional)</label>
+          <input type="date" id="org-deadline">
+        </div>
+        <div class="field">
+          <label>Expected # of people (optional)</label>
+          <input type="number" id="org-total" min="2" max="50" placeholder="e.g. 8">
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="createPoll()">Create Poll →</button>
+    </div>
+
+    <div id="org-share-panel" class="share-panel fade-up" style="display:none">
+      <div class="share-title">🎉 Your poll is ready!</div>
+      <div class="share-sub">Drop this link in the group chat. Anyone who opens it can fill out their availability.</div>
+      <div class="share-url" id="org-share-url"></div>
+      <div class="copy-row">
+        <button class="btn btn-primary" onclick="copyLink()" style="flex:1">📋 Copy Link</button>
+        <button class="btn btn-secondary" onclick="openPoll()">Open →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESPONDENT / RESULTS VIEW ══ -->
+  <div id="view-respond" class="view">
+    <div id="resp-event-header" class="event-header fade-up"></div>
+
+    <div class="tab-bar" id="resp-tabs">
+      <div class="tab active" data-tab="fill" onclick="switchTab('fill')">✏️ Fill Out</div>
+      <div class="tab" data-tab="results" onclick="switchTab('results')">📊 Results</div>
+    </div>
+
+    <!-- Fill Out Tab -->
+    <div id="tab-fill">
+      <div class="card name-section">
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="resp-name" placeholder="What do your friends call you?" maxlength="40">
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--avail)"></div> Available</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--maybe)"></div> Maybe</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--surface3)"></div> Can't</div>
+          <div style="margin-left:auto;font-size:11px;color:var(--muted)">Tap to cycle</div>
+        </div>
+      </div>
+
+      <div class="grid-outer">
+        <div id="fill-grid" class="time-grid"></div>
+      </div>
+
+      <div style="height:16px"></div>
+      <button class="btn btn-avail btn-full" id="resp-submit-btn" onclick="submitResponse()">Submit My Availability ✓</button>
+    </div>
+
+    <!-- Results Tab -->
+    <div id="tab-results" style="display:none">
+      <div id="best-slot-banner" style="display:none" class="best-slot fade-up"></div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Responded</div>
+        <div id="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <div id="progress-label" style="font-size:13px;color:var(--muted)"></div>
+        </div>
+        <div id="respondents-list" class="respondents"></div>
+      </div>
+
+      <div class="legend" style="margin-bottom:10px;justify-content:flex-end">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.15)"></div> Few</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.65)"></div> Most</div>
+        <div class="legend-item" style="gap:6px"><span style="font-size:14px">⭐</span> Best slot</div>
+      </div>
+
+      <div class="grid-outer">
+        <div id="results-grid" class="time-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CONFIRMATION VIEW ══ -->
+  <div id="view-confirm" class="view">
+    <div class="header">
+      <div class="logo"><span class="logo-dot"></span>WhenFree</div>
+    </div>
+    <div class="card confirm-card fade-up">
+      <div class="confirm-emoji" id="confirm-emoji">🎉</div>
+      <div class="confirm-title" id="confirm-title">You're in!</div>
+      <div class="confirm-sub" id="confirm-sub">Your availability has been saved.</div>
+      <div class="confirm-actions">
+        <button class="btn btn-avail btn-full" onclick="downloadICS()">📅 Add to Calendar (.ics)</button>
+        <button class="btn btn-secondary btn-full" onclick="copyLink()">🔗 Copy & Share Link</button>
+        <button class="btn btn-ghost btn-full" onclick="goToResults()">View Results →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="src/lib/firebase.js"></script>
+
+<script>
+// ═══════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════
+
+function toast(msg, dur = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+}
+
+function formatHour(h) {
+  if (h === 0) return '12 AM';
+  if (h < 12) return h + ' AM';
+  if (h === 12) return '12 PM';
+  return (h - 12) + ' PM';
+}
+
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+}
+
+function formatDateHeader(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return {
+    day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+    date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  };
+}
+
+function formatFullDateTime(dateStr, hour, tz) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const dayFmt = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return `${dayFmt} · ${formatHour(hour)}`;
+}
+
+function isDeadlinePassed(dl) {
+  if (!dl) return false;
+  return new Date(dl + 'T23:59:59') < new Date();
+}
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+
+let appState = {
+  poll: null,
+  pollId: null,
+  responses: [],
+  myName: null,
+  confirmedBestSlot: null,
+  unsubscribeResponses: null
+};
+
+function getPollIdFromURL() {
+  return location.hash.slice(1) || null;
+}
+
+function buildShareURL(pollId) {
+  return location.origin + location.pathname + '#' + pollId;
+}
+
+// ═══════════════════════════════════════
+//  ORGANIZER MODE
+// ═══════════════════════════════════════
+
+let calState = { year: 0, month: 0, rangeStart: null, rangeEnd: null };
+
+function initOrganizer() {
+  const now = new Date();
+  calState.year = now.getFullYear();
+  calState.month = now.getMonth();
+  calState.rangeStart = null;
+  calState.rangeEnd = null;
+
+  renderCalendar();
+  populateTimeSelects();
+  populateTZSelect();
+
+  document.getElementById('cal-prev').onclick = () => {
+    calState.month--;
+    if (calState.month < 0) { calState.month = 11; calState.year--; }
+    renderCalendar();
+  };
+  document.getElementById('cal-next').onclick = () => {
+    calState.month++;
+    if (calState.month > 11) { calState.month = 0; calState.year++; }
+    renderCalendar();
+  };
+}
+
+function renderCalendar() {
+  const { year, month } = calState;
+  const monthNames = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${monthNames[month]} ${year}`;
+
+  const cal = document.getElementById('org-calendar');
+  cal.innerHTML = '';
+
+  const dayLabels = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  dayLabels.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-day-label'; el.textContent = d;
+    cal.appendChild(el);
+  });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    cal.appendChild(el);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    el.textContent = d;
+
+    const thisDate = new Date(year, month, d);
+    thisDate.setHours(0,0,0,0);
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    if (thisDate < today) {
+      el.classList.add('past');
+    } else {
+      if (thisDate.getTime() === today.getTime()) el.classList.add('today');
+
+      if (calState.rangeStart && calState.rangeStart === dateStr) el.classList.add('range-start');
+      if (calState.rangeEnd && calState.rangeEnd === dateStr) el.classList.add('range-end');
+      if (calState.rangeStart && calState.rangeEnd) {
+        if (dateStr > calState.rangeStart && dateStr < calState.rangeEnd) el.classList.add('in-range');
+      }
+
+      el.onclick = () => handleCalClick(dateStr);
+    }
+    cal.appendChild(el);
+  }
+
+  updateDateSelectionLabel();
+}
+
+function handleCalClick(dateStr) {
+  if (!calState.rangeStart || (calState.rangeStart && calState.rangeEnd)) {
+    calState.rangeStart = dateStr;
+    calState.rangeEnd = null;
+  } else {
+    if (dateStr < calState.rangeStart) {
+      calState.rangeEnd = calState.rangeStart;
+      calState.rangeStart = dateStr;
+    } else if (dateStr === calState.rangeStart) {
+      calState.rangeEnd = dateStr;
+    } else {
+      // Limit to 14 days
+      const start = new Date(calState.rangeStart + 'T00:00:00');
+      const end = new Date(dateStr + 'T00:00:00');
+      const diff = (end - start) / 86400000;
+      if (diff > 13) {
+        const maxEnd = new Date(start);
+        maxEnd.setDate(maxEnd.getDate() + 13);
+        calState.rangeEnd = maxEnd.toISOString().slice(0,10);
+        toast('Max 14 days — trimmed to 2 weeks', 3000);
+      } else {
+        calState.rangeEnd = dateStr;
+      }
+    }
+  }
+  renderCalendar();
+}
+
+function updateDateSelectionLabel() {
+  const el = document.getElementById('org-date-selection');
+  if (!calState.rangeStart) {
+    el.textContent = 'Tap a date to start selecting';
+  } else if (!calState.rangeEnd) {
+    el.textContent = `Start: ${formatDateShort(calState.rangeStart)} — tap end date`;
+  } else {
+    const dates = getDatesInRange(calState.rangeStart, calState.rangeEnd);
+    el.textContent = `${formatDateShort(calState.rangeStart)} → ${formatDateShort(calState.rangeEnd)}  (${dates.length} days)`;
+    el.style.color = 'var(--avail)';
+  }
+}
+
+function getDatesInRange(start, end) {
+  const dates = [];
+  const cur = new Date(start + 'T00:00:00');
+  const endD = new Date(end + 'T00:00:00');
+  while (cur <= endD) {
+    dates.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+
+function populateTimeSelects() {
+  const startSel = document.getElementById('org-start-time');
+  const endSel = document.getElementById('org-end-time');
+  startSel.innerHTML = '';
+  endSel.innerHTML = '';
+
+  for (let h = 0; h < 24; h++) {
+    const opt1 = document.createElement('option');
+    opt1.value = h; opt1.textContent = formatHour(h);
+    startSel.appendChild(opt1);
+
+    const opt2 = document.createElement('option');
+    opt2.value = h; opt2.textContent = formatHour(h);
+    endSel.appendChild(opt2);
+  }
+  startSel.value = 18;
+  endSel.value = 23;
+}
+
+function populateTZSelect() {
+  const sel = document.getElementById('org-tz');
+  sel.innerHTML = '';
+
+  const tzList = [
+    'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
+    'America/Phoenix','America/Anchorage','Pacific/Honolulu',
+    'Europe/London','Europe/Paris','Europe/Berlin','Europe/Moscow',
+    'Asia/Dubai','Asia/Kolkata','Asia/Bangkok','Asia/Tokyo','Asia/Shanghai',
+    'Australia/Sydney','Pacific/Auckland','UTC'
+  ];
+
+  let userTZ = 'UTC';
+  try { userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e) {}
+
+  if (!tzList.includes(userTZ)) tzList.unshift(userTZ);
+
+  tzList.forEach(tz => {
+    const opt = document.createElement('option');
+    opt.value = tz; opt.textContent = tz.replace(/_/g,' ');
+    sel.appendChild(opt);
+  });
+  sel.value = userTZ;
+
+  const updateHint = () => {
+    const tz = sel.value;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { timeZone: tz, hour:'numeric', minute:'2-digit', timeZoneName:'short' });
+    document.getElementById('org-tz-hint').textContent = `Current time: ${timeStr}`;
+  };
+  sel.onchange = updateHint;
+  updateHint();
+}
+
+async function createPoll() {
+  const name = document.getElementById('org-name').value.trim();
+  if (!name) { toast('Give your event a name ✍️'); document.getElementById('org-name').focus(); return; }
+
+  if (!calState.rangeStart || !calState.rangeEnd) {
+    toast('Pick a date range on the calendar 📅');
+    return;
+  }
+
+  const startH = parseInt(document.getElementById('org-start-time').value);
+  const endH = parseInt(document.getElementById('org-end-time').value);
+  if (endH <= startH) { toast('End time must be after start time'); return; }
+
+  const dates = getDatesInRange(calState.rangeStart, calState.rangeEnd);
+  const total = parseInt(document.getElementById('org-total').value) || 0;
+
+  const btn = document.querySelector('[onclick="createPoll()"]');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  try {
+    const docRef = await db.collection('polls').add({
+      n: name,
+      d: document.getElementById('org-desc').value.trim(),
+      dates,
+      sh: startH,
+      eh: endH,
+      tz: document.getElementById('org-tz').value,
+      dl: document.getElementById('org-deadline').value || null,
+      total: total || null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    const url = buildShareURL(docRef.id);
+    document.getElementById('org-share-url').textContent = url;
+    document.getElementById('org-share-panel').style.display = 'block';
+    document.getElementById('org-share-panel').scrollIntoView({ behavior: 'smooth' });
+    window._shareURL = url;
+    document.getElementById('fabCopy').style.display = 'flex';
+  } catch (e) {
+    toast('Failed to create poll. Check your connection.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create Poll →';
+  }
+}
+
+function openPoll() {
+  const url = document.getElementById('org-share-url').textContent;
+  window.open(url, '_blank');
+}
+
+// ═══════════════════════════════════════
+//  RESPONDENT MODE
+// ═══════════════════════════════════════
+
+let fillSlots = {}; // slotKey -> 0|1|2
+
+function initRespondent(pollId, poll) {
+  appState.poll = poll;
+  appState.pollId = pollId;
+
+  renderEventHeader(poll);
+  document.getElementById('fabCopy').style.display = 'flex';
+  window._shareURL = buildShareURL(pollId);
+
+  if (appState.unsubscribeResponses) appState.unsubscribeResponses();
+
+  appState.unsubscribeResponses = db.collection('polls').doc(pollId).collection('responses')
+    .onSnapshot(snapshot => {
+      const responses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      appState.responses = responses;
+
+      renderEventHeader(poll);
+      renderFillGrid(poll, responses);
+      renderResults(poll, responses);
+    });
+}
+
+function renderEventHeader(poll) {
+  const header = document.getElementById('resp-event-header');
+  const deadlinePassed = isDeadlinePassed(poll.dl);
+  const tzShort = poll.tz.split('/').pop().replace(/_/g,' ');
+
+  let deadlineHTML = '';
+  if (poll.dl) {
+    const dlDate = new Date(poll.dl + 'T23:59:59');
+    const dlStr = dlDate.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    deadlineHTML = `<div class="meta-pill ${deadlinePassed ? 'deadline-expired' : ''}">
+      ${deadlinePassed ? '⚠️ Closed' : '⏰ Due'} ${dlStr}
+    </div>`;
+  }
+
+  const totalPill = poll.total
+    ? `<div class="meta-pill">👥 ${appState.responses.length}/${poll.total} responded</div>`
+    : `<div class="meta-pill">👥 ${appState.responses.length} responded</div>`;
+
+  header.innerHTML = `
+    <div class="event-name">${escapeHTML(poll.n)}</div>
+    ${poll.d ? `<div style="color:var(--muted);font-size:14px;margin:6px 0">${escapeHTML(poll.d)}</div>` : ''}
+    <div class="event-meta">
+      ${totalPill}
+      <div class="meta-pill">🕐 ${formatHour(poll.sh)}–${formatHour(poll.eh)}</div>
+      <div class="meta-pill">🌍 ${tzShort}</div>
+      ${deadlineHTML}
+    </div>
+  `;
+}
+
+function getSlotKey(dateIdx, hourOffset) {
+  return `${dateIdx}_${hourOffset}`;
+}
+
+function compressSlots(poll, slots) {
+  const numDates = poll.dates.length;
+  const numHours = poll.eh - poll.sh;
+  let str = '';
+  for (let d = 0; d < numDates; d++) {
+    for (let h = 0; h < numHours; h++) {
+      const key = getSlotKey(d, h);
+      str += (slots[key] || 0).toString();
+    }
+  }
+  return str;
+}
+
+function decompressSlots(poll, str) {
+  if (!str) return {};
+  const slots = {};
+  const numDates = poll.dates.length;
+  const numHours = poll.eh - poll.sh;
+  let idx = 0;
+  for (let d = 0; d < numDates; d++) {
+    for (let h = 0; h < numHours; h++) {
+      const val = parseInt(str[idx] || '0');
+      if (val > 0) slots[getSlotKey(d, h)] = val;
+      idx++;
+    }
+  }
+  return slots;
+}
+
+function renderFillGrid(poll, responses) {
+  const grid = document.getElementById('fill-grid');
+  const numDates = poll.dates.length;
+  const numHours = poll.eh - poll.sh;
+
+  // Set up CSS grid: time label col + date cols
+  grid.style.gridTemplateColumns = `56px repeat(${numDates}, 1fr)`;
+  grid.innerHTML = '';
+
+  // Corner
+  const corner = document.createElement('div');
+  corner.className = 'grid-corner';
+  corner.textContent = '';
+  grid.appendChild(corner);
+
+  // Date headers
+  poll.dates.forEach((date, di) => {
+    const { day, date: dateLabel } = formatDateHeader(date);
+    const cell = document.createElement('div');
+    cell.className = 'grid-date-header';
+    cell.innerHTML = `
+      <div style="font-size:12px;font-weight:700">${dateLabel}</div>
+      <div class="grid-date-day">${day}</div>
+      <div class="col-actions">
+        <button class="col-btn" onclick="selectAllCol(${di})">All</button>
+        <button class="col-btn" onclick="clearCol(${di})">None</button>
+      </div>
+    `;
+    grid.appendChild(cell);
+  });
+
+  // Time rows
+  for (let h = 0; h < numHours; h++) {
+    const hour = poll.sh + h;
+    const timeLabel = document.createElement('div');
+    timeLabel.className = 'grid-time-label';
+    timeLabel.textContent = formatHour(hour);
+    grid.appendChild(timeLabel);
+
+    poll.dates.forEach((date, di) => {
+      const key = getSlotKey(di, h);
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.id = `fc_${di}_${h}`;
+      cell.onclick = () => cycleSlot(di, h, poll, responses);
+      updateFillCell(cell, key, responses, poll);
+      grid.appendChild(cell);
+    });
+  }
+}
+
+function updateFillCell(cell, key, responses, poll) {
+  const state = fillSlots[key] || 0;
+  cell.classList.remove('avail', 'maybe');
+
+  // Count how many others picked this
+  let count = 0;
+  responses.forEach(r => {
+    const s = decompressSlots(poll, r.s);
+    if (s[key] === 1 || s[key] === 2) count++;
+  });
+
+  let icon = '';
+  if (state === 1) { cell.classList.add('avail'); icon = '✓'; }
+  else if (state === 2) { cell.classList.add('maybe'); icon = '~'; }
+
+  let countHTML = '';
+  if (count > 0) {
+    countHTML = `<div class="cell-count has-count">${count}</div>`;
+  }
+
+  cell.innerHTML = `<span class="cell-icon">${icon}</span>${countHTML}`;
+}
+
+function cycleSlot(di, h, poll, responses) {
+  const key = getSlotKey(di, h);
+  const cur = fillSlots[key] || 0;
+  fillSlots[key] = (cur + 1) % 3;
+  if (fillSlots[key] === 0) delete fillSlots[key];
+
+  const cell = document.getElementById(`fc_${di}_${h}`);
+  cell.classList.add('pop');
+  setTimeout(() => cell.classList.remove('pop'), 250);
+  updateFillCell(cell, key, responses, poll);
+}
+
+function selectAllCol(di) {
+  const poll = appState.poll;
+  const numHours = poll.eh - poll.sh;
+  for (let h = 0; h < numHours; h++) {
+    fillSlots[getSlotKey(di, h)] = 1;
+    const cell = document.getElementById(`fc_${di}_${h}`);
+    if (cell) updateFillCell(cell, getSlotKey(di, h), appState.responses, poll);
+  }
+}
+
+function clearCol(di) {
+  const poll = appState.poll;
+  const numHours = poll.eh - poll.sh;
+  for (let h = 0; h < numHours; h++) {
+    const key = getSlotKey(di, h);
+    delete fillSlots[key];
+    const cell = document.getElementById(`fc_${di}_${h}`);
+    if (cell) updateFillCell(cell, key, appState.responses, poll);
+  }
+}
+
+async function submitResponse() {
+  const name = document.getElementById('resp-name').value.trim();
+  if (!name) { toast('Enter your name first 👆'); document.getElementById('resp-name').focus(); return; }
+
+  const { poll, pollId } = appState;
+  const btn = document.getElementById('resp-submit-btn');
+  btn.disabled = true;
+
+  try {
+    const responsesRef = db.collection('polls').doc(pollId).collection('responses');
+
+    const existing = await responsesRef.where('n', '==', name).get();
+    const batch = db.batch();
+    existing.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    await responsesRef.add({
+      n: name,
+      s: compressSlots(poll, fillSlots),
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    appState.myName = name;
+
+    const best = getBestSlot(poll, appState.responses);
+    appState.confirmedBestSlot = best;
+    showConfirmation(poll, name, best, appState.responses);
+  } catch (e) {
+    toast('Error saving response. Try again.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function showConfirmation(poll, name, bestSlot, responses) {
+  const total = poll.total || responses.length;
+  const count = responses.length;
+
+  document.getElementById('confirm-title').textContent = `You're in, ${name.split(' ')[0]}!`;
+  document.getElementById('confirm-sub').textContent =
+    `${count} of ${total} ${total === 1 ? 'person' : 'people'} ${count === 1 ? 'has' : 'have'} responded.${bestSlot ? ' Best time found! 🎯' : ' Waiting on more responses.'}`;
+
+  if (bestSlot) {
+    document.getElementById('confirm-emoji').textContent = '🎯';
+  }
+
+  showView('confirm');
+}
+
+function goToResults() {
+  showView('respond');
+  switchTab('results');
+  renderResults(appState.poll, appState.responses);
+}
+
+// ═══════════════════════════════════════
+//  RESULTS MODE
+// ═══════════════════════════════════════
+
+function getBestSlot(poll, responses) {
+  if (!responses.length) return null;
+
+  const numDates = poll.dates.length;
+  const numHours = poll.eh - poll.sh;
+  let best = null;
+  let bestScore = -1;
+
+  for (let d = 0; d < numDates; d++) {
+    for (let h = 0; h < numHours; h++) {
+      const key = getSlotKey(d, h);
+      let score = 0;
+      responses.forEach(r => {
+        const s = decompressSlots(poll, r.s);
+        if (s[key] === 1) score += 2;
+        else if (s[key] === 2) score += 1;
+      });
+      if (score > bestScore) { bestScore = score; best = { d, h, key, score }; }
+    }
+  }
+
+  if (bestScore === 0) return null;
+  return best;
+}
+
+function renderResults(poll, responses) {
+  // Respondent list
+  const list = document.getElementById('respondents-list');
+  list.innerHTML = '';
+
+  if (poll.total) {
+    const pct = Math.round((responses.length / poll.total) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `${responses.length} of ${poll.total} responded`;
+  } else {
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('progress-label').textContent = `${responses.length} ${responses.length === 1 ? 'person' : 'people'} responded`;
+  }
+
+  responses.forEach(r => {
+    const chip = document.createElement('div');
+    chip.className = 'respondent-chip done';
+    chip.innerHTML = `<div class="chip-dot done"></div>${escapeHTML(r.n)}`;
+    list.appendChild(chip);
+  });
+
+  // Best slot banner
+  const best = getBestSlot(poll, responses);
+  const banner = document.getElementById('best-slot-banner');
+  if (best) {
+    const dateStr = poll.dates[best.d];
+    const hour = poll.sh + best.h;
+    const availCount = responses.filter(r => {
+      const s = decompressSlots(poll, r.s);
+      return s[best.key] === 1;
+    }).length;
+    const maybeCount = responses.filter(r => {
+      const s = decompressSlots(poll, r.s);
+      return s[best.key] === 2;
+    }).length;
+
+    banner.style.display = 'block';
+    banner.innerHTML = `
+      <div class="best-slot-label">⭐ Best Time</div>
+      <div class="best-slot-time">${formatFullDateTime(dateStr, hour, poll.tz)}</div>
+      <div class="best-slot-stat">${availCount} available · ${maybeCount} maybe</div>
+    `;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // Results grid
+  const grid = document.getElementById('results-grid');
+  const numDates = poll.dates.length;
+  const numHours = poll.eh - poll.sh;
+  grid.style.gridTemplateColumns = `56px repeat(${numDates}, 1fr)`;
+  grid.innerHTML = '';
+
+  // Corner
+  const corner = document.createElement('div');
+  corner.className = 'grid-corner';
+  grid.appendChild(corner);
+
+  // Date headers (no col-actions for results)
+  poll.dates.forEach((date) => {
+    const { day, date: dateLabel } = formatDateHeader(date);
+    const cell = document.createElement('div');
+    cell.className = 'grid-date-header';
+    cell.innerHTML = `<div style="font-size:12px;font-weight:700">${dateLabel}</div><div class="grid-date-day">${day}</div>`;
+    grid.appendChild(cell);
+  });
+
+  // Max score for heat normalization
+  let maxScore = 1;
+  for (let d = 0; d < numDates; d++) {
+    for (let h = 0; h < numHours; h++) {
+      const key = getSlotKey(d, h);
+      let score = 0;
+      responses.forEach(r => {
+        const s = decompressSlots(poll, r.s);
+        if (s[key] === 1) score += 2;
+        else if (s[key] === 2) score += 1;
+      });
+      if (score > maxScore) maxScore = score;
+    }
+  }
+
+  for (let h = 0; h < numHours; h++) {
+    const hour = poll.sh + h;
+    const timeLabel = document.createElement('div');
+    timeLabel.className = 'grid-time-label';
+    timeLabel.textContent = formatHour(hour);
+    grid.appendChild(timeLabel);
+
+    poll.dates.forEach((date, di) => {
+      const key = getSlotKey(di, h);
+      let score = 0;
+      const availNames = [], maybeNames = [];
+
+      responses.forEach(r => {
+        const s = decompressSlots(poll, r.s);
+        if (s[key] === 1) { score += 2; availNames.push(r.n); }
+        else if (s[key] === 2) { score += 1; maybeNames.push(r.n); }
+      });
+
+      const heatLevel = score === 0 ? 0 : Math.ceil((score / maxScore) * 5);
+      const isBest = best && best.key === key;
+
+      const cell = document.createElement('div');
+      cell.className = `grid-cell result cell-heat-${heatLevel}${isBest ? ' cell-best' : ''}`;
+
+      if (score > 0) {
+        const totalCount = availNames.length + maybeNames.length;
+        cell.innerHTML = `
+          <div class="cell-result-count">${totalCount}</div>
+          <div class="cell-result-label">${isBest ? '⭐' : 'free'}</div>
+        `;
+      } else if (isBest) {
+        cell.innerHTML = '<div class="cell-result-label">⭐</div>';
+      }
+
+      // Tooltip
+      if (availNames.length || maybeNames.length) {
+        const dateLabel = formatDateShort(date);
+        const hourLabel = formatHour(hour);
+        cell.addEventListener('mouseenter', (e) => showTooltip(e, dateLabel, hourLabel, availNames, maybeNames));
+        cell.addEventListener('mouseleave', hideTooltip);
+        cell.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          showTooltip(e.touches[0], dateLabel, hourLabel, availNames, maybeNames);
+          setTimeout(hideTooltip, 2500);
+        }, { passive: false });
+      }
+
+      grid.appendChild(cell);
+    });
+  }
+}
+
+function showTooltip(e, dateLabel, hourLabel, availNames, maybeNames) {
+  const tip = document.getElementById('tooltip');
+  let html = `<div class="tooltip-time">${dateLabel} · ${hourLabel}</div>`;
+  availNames.forEach(n => {
+    html += `<div class="tooltip-name"><span class="tooltip-avail">✓</span> ${escapeHTML(n)}</div>`;
+  });
+  maybeNames.forEach(n => {
+    html += `<div class="tooltip-name"><span class="tooltip-maybe">~</span> ${escapeHTML(n)}</div>`;
+  });
+  tip.innerHTML = html;
+
+  const x = Math.min(e.clientX + 12, window.innerWidth - 220);
+  const y = Math.min(e.clientY + 12, window.innerHeight - 150);
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+  tip.classList.add('show');
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').classList.remove('show');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('tab-fill').style.display = tab === 'fill' ? 'block' : 'none';
+  document.getElementById('tab-results').style.display = tab === 'results' ? 'block' : 'none';
+
+  if (tab === 'results') {
+    renderResults(appState.poll, appState.responses);
+  }
+}
+
+// ═══════════════════════════════════════
+//  ICS GENERATION
+// ═══════════════════════════════════════
+
+function downloadICS() {
+  const poll = appState.poll;
+  const best = appState.confirmedBestSlot || getBestSlot(poll, appState.responses);
+
+  let startDT, endDT, summary;
+  summary = poll.n;
+
+  if (best) {
+    const date = poll.dates[best.d];
+    const hour = poll.sh + best.h;
+    startDT = formatICSDate(date, hour, poll.tz);
+    endDT = formatICSDate(date, hour + 1, poll.tz);
+  } else {
+    // Placeholder: first date, start hour
+    startDT = formatICSDate(poll.dates[0], poll.sh, poll.tz);
+    endDT = formatICSDate(poll.dates[0], poll.sh + 1, poll.tz);
+  }
+
+  const uid = randId(16) + '@whenfree';
+  const now = new Date();
+  const dtstamp = now.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+  const shareURL = window._shareURL || location.href;
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//WhenFree//WhenFree Poll//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dtstamp}`,
+    `DTSTART;TZID=${poll.tz}:${startDT}`,
+    `DTEND;TZID=${poll.tz}:${endDT}`,
+    `SUMMARY:${escapeICS(summary)}`,
+    `DESCRIPTION:Added from WhenFree poll.\\n${escapeICS(shareURL)}`,
+    `URL:${shareURL}`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${poll.n.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Calendar file downloaded! 📅');
+}
+
+function formatICSDate(dateStr, hour, tz) {
+  // Returns YYYYMMDDTHHMMSS (local time in the given tz)
+  const [y, m, d] = dateStr.split('-');
+  const hStr = String(hour).padStart(2,'0');
+  return `${y}${m}${d}T${hStr}0000`;
+}
+
+function escapeICS(str) {
+  return str.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════
+//  COPY LINK
+// ═══════════════════════════════════════
+
+async function copyLink() {
+  const url = window._shareURL || location.href;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('Link copied! 🔗 Drop it in the chat');
+  } catch (e) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Link copied! 🔗');
+  }
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+
+async function init() {
+  const pollId = getPollIdFromURL();
+
+  if (!pollId) {
+    showView('organizer');
+    initOrganizer();
+    return;
+  }
+
+  try {
+    const snap = await db.collection('polls').doc(pollId).get();
+    if (!snap.exists) {
+      toast('Poll not found.');
+      showView('organizer');
+      initOrganizer();
+      return;
+    }
+    showView('respond');
+    initRespondent(pollId, snap.data());
+  } catch (e) {
+    toast('Error loading poll.');
+    showView('organizer');
+    initOrganizer();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
