@@ -272,7 +272,8 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 }
 .tooltip.show { display: block; }
 .tooltip-time { font-weight: 700; margin-bottom: 6px; color: var(--accent2); }
-.tooltip-name { display: flex; align-items: center; gap: 5px; padding: 2px 0; }
+.tooltip-section { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 6px; margin-bottom: 2px; }
+.tooltip-name { padding: 1px 0; }
 .tooltip-avail { color: var(--avail); }
 .tooltip-maybe { color: var(--maybe); }
 
@@ -504,6 +505,8 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
         <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.15)"></div> Few</div>
         <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.65)"></div> Most</div>
         <div class="legend-item" style="gap:6px"><span style="font-size:14px">⭐</span> Best slot</div>
+        <div class="legend-item" style="gap:4px"><span style="color:var(--avail);font-weight:700">✓</span> Available</div>
+        <div class="legend-item" style="gap:4px"><span style="color:var(--maybe);font-weight:700">~</span> Maybe</div>
       </div>
 
       <div class="grid-outer">
@@ -902,31 +905,29 @@ function getSlotKey(dateIdx, hourOffset) {
   return `${dateIdx}_${hourOffset}`;
 }
 
-function compressSlots(poll, slots) {
-  const numDates = poll.dates.length;
-  const numHours = poll.eh - poll.sh;
-  let str = '';
-  for (let d = 0; d < numDates; d++) {
-    for (let h = 0; h < numHours; h++) {
-      const key = getSlotKey(d, h);
-      str += (slots[key] || 0).toString();
-    }
+// Converts internal fillSlots {dateIdx_hourOffset: 1|2} → Firestore map {"2026-05-12_18": "available"|"maybe"}
+function slotsToFirestore(poll, slots) {
+  const map = {};
+  for (const [key, val] of Object.entries(slots)) {
+    if (!val) continue;
+    const [di, h] = key.split('_').map(Number);
+    const date = poll.dates[di];
+    const hour = String(poll.sh + h).padStart(2, '0');
+    map[`${date}_${hour}`] = val === 1 ? 'available' : 'maybe';
   }
-  return str;
+  return map;
 }
 
-function decompressSlots(poll, str) {
-  if (!str) return {};
+// Converts Firestore map → internal fillSlots {dateIdx_hourOffset: 1|2}
+function slotsFromFirestore(poll, map) {
+  if (!map) return {};
   const slots = {};
-  const numDates = poll.dates.length;
-  const numHours = poll.eh - poll.sh;
-  let idx = 0;
-  for (let d = 0; d < numDates; d++) {
-    for (let h = 0; h < numHours; h++) {
-      const val = parseInt(str[idx] || '0');
-      if (val > 0) slots[getSlotKey(d, h)] = val;
-      idx++;
-    }
+  for (const [key, status] of Object.entries(map)) {
+    const [date, hourStr] = key.split('_');
+    const di = poll.dates.indexOf(date);
+    if (di === -1) continue;
+    const h = parseInt(hourStr) - poll.sh;
+    slots[getSlotKey(di, h)] = status === 'available' ? 1 : 2;
   }
   return slots;
 }
@@ -989,7 +990,7 @@ function updateFillCell(cell, key, responses, poll) {
   // Count how many others picked this
   let count = 0;
   responses.forEach(r => {
-    const s = decompressSlots(poll, r.s);
+    const s = slotsFromFirestore(poll, r.slots);
     if (s[key] === 1 || s[key] === 2) count++;
   });
 
@@ -1056,7 +1057,7 @@ async function submitResponse() {
 
     await responsesRef.add({
       n: name,
-      s: compressSlots(poll, fillSlots),
+      slots: slotsToFirestore(poll, fillSlots),
       submittedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
@@ -1110,7 +1111,7 @@ function getBestSlot(poll, responses) {
       const key = getSlotKey(d, h);
       let score = 0;
       responses.forEach(r => {
-        const s = decompressSlots(poll, r.s);
+        const s = slotsFromFirestore(poll, r.slots);
         if (s[key] === 1) score += 2;
         else if (s[key] === 2) score += 1;
       });
@@ -1150,11 +1151,11 @@ function renderResults(poll, responses) {
     const dateStr = poll.dates[best.d];
     const hour = poll.sh + best.h;
     const availCount = responses.filter(r => {
-      const s = decompressSlots(poll, r.s);
+      const s = slotsFromFirestore(poll, r.slots);
       return s[best.key] === 1;
     }).length;
     const maybeCount = responses.filter(r => {
-      const s = decompressSlots(poll, r.s);
+      const s = slotsFromFirestore(poll, r.slots);
       return s[best.key] === 2;
     }).length;
 
@@ -1196,7 +1197,7 @@ function renderResults(poll, responses) {
       const key = getSlotKey(d, h);
       let score = 0;
       responses.forEach(r => {
-        const s = decompressSlots(poll, r.s);
+        const s = slotsFromFirestore(poll, r.slots);
         if (s[key] === 1) score += 2;
         else if (s[key] === 2) score += 1;
       });
@@ -1217,7 +1218,7 @@ function renderResults(poll, responses) {
       const availNames = [], maybeNames = [];
 
       responses.forEach(r => {
-        const s = decompressSlots(poll, r.s);
+        const s = slotsFromFirestore(poll, r.slots);
         if (s[key] === 1) { score += 2; availNames.push(r.n); }
         else if (s[key] === 2) { score += 1; maybeNames.push(r.n); }
       });
@@ -1259,12 +1260,18 @@ function renderResults(poll, responses) {
 function showTooltip(e, dateLabel, hourLabel, availNames, maybeNames) {
   const tip = document.getElementById('tooltip');
   let html = `<div class="tooltip-time">${dateLabel} · ${hourLabel}</div>`;
-  availNames.forEach(n => {
-    html += `<div class="tooltip-name"><span class="tooltip-avail">✓</span> ${escapeHTML(n)}</div>`;
-  });
-  maybeNames.forEach(n => {
-    html += `<div class="tooltip-name"><span class="tooltip-maybe">~</span> ${escapeHTML(n)}</div>`;
-  });
+  if (availNames.length) {
+    html += `<div class="tooltip-section tooltip-avail">✓ Available</div>`;
+    availNames.forEach(n => {
+      html += `<div class="tooltip-name">${escapeHTML(n)}</div>`;
+    });
+  }
+  if (maybeNames.length) {
+    html += `<div class="tooltip-section tooltip-maybe">~ Maybe</div>`;
+    maybeNames.forEach(n => {
+      html += `<div class="tooltip-name">${escapeHTML(n)}</div>`;
+    });
+  }
   tip.innerHTML = html;
 
   const x = Math.min(e.clientX + 12, window.innerWidth - 220);
