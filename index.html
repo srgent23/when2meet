@@ -906,28 +906,21 @@ function getSlotKey(dateIdx, hourOffset) {
 }
 
 // Converts internal fillSlots {dateIdx_hourOffset: 1|2} → Firestore map {"2026-05-12_18": "available"|"maybe"}
-function hourToLabel(h) {
-  // 18 -> "6pm", 0 -> "12am", 12 -> "12pm"
-  if (h === 0) return '12am';
-  if (h === 12) return '12pm';
-  return h < 12 ? `${h}am` : `${h - 12}pm`;
-}
-
 function labelToHour(label) {
-  // "6pm" -> 18, "12am" -> 0, "12pm" -> 12
-  const pm = label.endsWith('pm');
-  const h = parseInt(label);
-  if (pm) return h === 12 ? 12 : h + 12;
-  return h === 12 ? 0 : h;
+  // "6 PM" -> 18, "12 AM" -> 0, "12 PM" -> 12
+  const [h, period] = label.split(' ');
+  const n = parseInt(h);
+  if (period === 'PM') return n === 12 ? 12 : n + 12;
+  return n === 12 ? 0 : n;
 }
 
-// Converts internal fillSlots {dateIdx_hourOffset: 1|2} → Firestore map {"2026-05-12 6pm": "available"|"maybe"}
+// Converts internal fillSlots {dateIdx_hourOffset: 1|2} → Firestore map {"2026-05-16_6 PM": "available"|"maybe"}
 function slotsToFirestore(poll, slots) {
   const map = {};
   for (const [key, val] of Object.entries(slots)) {
     if (!val) continue;
     const [di, h] = key.split('_').map(Number);
-    map[`${poll.dates[di]} ${hourToLabel(poll.sh + h)}`] = val === 1 ? 'available' : 'maybe';
+    map[`${poll.dates[di]}_${formatHour(poll.sh + h)}`] = val === 1 ? 'available' : 'maybe';
   }
   return map;
 }
@@ -937,9 +930,9 @@ function slotsFromFirestore(poll, map) {
   if (!map) return {};
   const slots = {};
   for (const [key, status] of Object.entries(map)) {
-    const spaceIdx = key.indexOf(' ');
-    const date = key.slice(0, spaceIdx);
-    const hour = labelToHour(key.slice(spaceIdx + 1));
+    const idx = key.indexOf('_');
+    const date = key.slice(0, idx);
+    const hour = labelToHour(key.slice(idx + 1));
     const di = poll.dates.indexOf(date);
     if (di === -1) continue;
     slots[getSlotKey(di, hour - poll.sh)] = status === 'available' ? 1 : 2;
