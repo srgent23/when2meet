@@ -1,4 +1,4 @@
-# WhenFree
+# When2Meet
 
 A lightweight scheduling poll tool for small friend groups. Think Doodle or WhenToMeet, but stripped down, mobile-first, and built to live in a group chat.
 
