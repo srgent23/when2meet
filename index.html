@@ -470,7 +470,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
   <div id="view-organizer" class="view">
     <div class="header">
       <div class="logo"><span class="logo-dot"></span>WhenFree</div>
-      <div class="logo-sub">Find a time, no drama ✨</div>
+      <div class="logo-sub">Find a time that works for everyone</div>
     </div>
 
     <div class="card fade-up">
@@ -482,7 +482,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       </div>
       <div class="field">
         <label>Description (optional)</label>
-        <textarea id="org-desc" rows="2" placeholder="Any details your crew needs to know" maxlength="300" style="resize:none"></textarea>
+        <textarea id="org-desc" rows="2" placeholder="Any details to include" maxlength="300" style="resize:none"></textarea>
       </div>
 
       <div class="field">
@@ -547,7 +547,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 
     <div id="org-share-panel" class="share-panel fade-up" style="display:none">
       <div class="share-title">🎉 Your poll is ready!</div>
-      <div class="share-sub">Drop this link in the group chat. Anyone who opens it can fill out their availability.</div>
+      <div class="share-sub">Share this link — anyone with it can fill out their availability.</div>
       <div class="share-url" id="org-share-url"></div>
       <div class="copy-row">
         <button class="btn btn-primary" onclick="copyLink()" style="flex:1">📋 Copy Link</button>
@@ -570,7 +570,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       <div class="card name-section">
         <div class="field">
           <label>Your Name</label>
-          <input type="text" id="resp-name" placeholder="What do your friends call you?" maxlength="40">
+          <input type="text" id="resp-name" placeholder="Your name" maxlength="40">
         </div>
         <div class="legend" id="fill-legend">
           <div class="legend-item"><div class="legend-dot" style="background:var(--avail)"></div> Available</div>
@@ -1545,7 +1545,7 @@ async function copyLink() {
   const url = window._shareURL || location.href;
   try {
     await navigator.clipboard.writeText(url);
-    toast('Link copied! 🔗 Drop it in the chat');
+    toast('Link copied! 🔗');
   } catch (e) {
     // Fallback
     const ta = document.createElement('textarea');
