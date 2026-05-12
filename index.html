@@ -373,6 +373,84 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 /* ── HIDDEN / VIEWS ── */
 .view { display: none; }
 .view.active { display: block; }
+
+/* ── POLL TYPE TOGGLE ── */
+.type-toggle {
+  display: flex; gap: 6px; background: var(--surface2);
+  padding: 4px; border-radius: 10px;
+}
+.type-btn {
+  flex: 1; padding: 9px 12px; border: none; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted);
+  background: transparent; transition: all 0.15s ease; text-align: center;
+  -webkit-user-select: none; user-select: none;
+}
+.type-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+/* ── OPTIONS BUILDER ── */
+.option-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+  background: var(--surface2); border-radius: 10px; padding: 10px 12px;
+}
+.option-row input[type="date"], .option-row select { flex: 1; margin: 0; }
+.opt-remove-btn {
+  background: var(--surface3); border: none; color: var(--muted); cursor: pointer;
+  width: 30px; height: 30px; border-radius: 8px; font-size: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s ease;
+}
+.opt-remove-btn:hover { background: var(--danger); color: #fff; }
+
+/* ── OPTIONS VOTE ── */
+.vote-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.vote-row {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; transition: border-color 0.15s ease;
+}
+.vote-row.voted-avail { border-color: var(--avail); }
+.vote-row.voted-maybe { border-color: var(--maybe); }
+.vote-option-label { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.vote-other-count { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.vote-btn-group { display: flex; gap: 8px; }
+.vote-btn {
+  flex: 1; padding: 9px 8px; border: 1.5px solid var(--border);
+  border-radius: 9px; background: var(--surface2); color: var(--muted);
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all 0.12s ease; text-align: center;
+  -webkit-user-select: none; user-select: none;
+}
+.vote-btn:active { transform: scale(0.95); }
+.vote-btn.sel-avail { background: var(--avail-dim); border-color: var(--avail); color: var(--avail); }
+.vote-btn.sel-maybe { background: var(--maybe-dim); border-color: var(--maybe); color: var(--maybe); }
+.vote-btn.sel-none { background: var(--surface3); border-color: var(--surface3); color: var(--muted); }
+
+/* ── OPTIONS RESULTS ── */
+.opt-result-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.opt-result-row {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+}
+.opt-result-row.opt-best {
+  border-color: var(--accent2);
+  background: linear-gradient(135deg, rgba(255,209,102,0.08), rgba(255,107,53,0.08));
+}
+.opt-result-label { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.opt-result-bar-wrap {
+  height: 6px; background: var(--surface3); border-radius: 3px;
+  margin-bottom: 8px; overflow: hidden;
+}
+.opt-result-bar {
+  height: 100%; background: linear-gradient(90deg, var(--avail), var(--accent2));
+  border-radius: 3px; transition: width 0.4s ease;
+}
+.opt-result-stats { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.opt-result-names { display: flex; flex-wrap: wrap; gap: 4px; }
+.opt-name-pill {
+  background: var(--surface2); border-radius: 100px; padding: 3px 10px;
+  font-size: 11px; font-weight: 500;
+}
+.opt-name-pill.avail { color: var(--avail); }
+.opt-name-pill.maybe { color: var(--maybe); }
 </style>
 
 <!-- Firebase compat CDN -->
@@ -406,22 +484,42 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       </div>
 
       <div class="field">
-        <label>Date Range</label>
-        <div class="cal-header">
-          <button class="cal-nav" id="cal-prev">‹</button>
-          <span class="cal-month" id="cal-month-label"></span>
-          <button class="cal-nav" id="cal-next">›</button>
+        <label>Poll Type</label>
+        <div class="type-toggle">
+          <button class="type-btn active" id="type-btn-grid" onclick="switchPollType('grid')">📅 Availability Grid</button>
+          <button class="type-btn" id="type-btn-options" onclick="switchPollType('options')">🗓️ Specific Options</button>
         </div>
-        <div class="calendar" id="org-calendar"></div>
-        <div id="org-date-selection" style="margin-top:8px;font-size:13px;color:var(--muted)">Tap to start selecting dates</div>
+        <div id="type-hint" style="font-size:12px;color:var(--muted);margin-top:6px">Respondents mark their availability across a date range</div>
       </div>
 
-      <div class="field">
-        <label>Time Range</label>
-        <div class="time-row">
-          <select id="org-start-time" class="time-select"></select>
-          <span style="color:var(--muted);white-space:nowrap;font-size:13px">to</span>
-          <select id="org-end-time" class="time-select"></select>
+      <div id="grid-mode-fields">
+        <div class="field">
+          <label>Date Range</label>
+          <div class="cal-header">
+            <button class="cal-nav" id="cal-prev">‹</button>
+            <span class="cal-month" id="cal-month-label"></span>
+            <button class="cal-nav" id="cal-next">›</button>
+          </div>
+          <div class="calendar" id="org-calendar"></div>
+          <div id="org-date-selection" style="margin-top:8px;font-size:13px;color:var(--muted)">Tap to start selecting dates</div>
+        </div>
+
+        <div class="field">
+          <label>Time Range</label>
+          <div class="time-row">
+            <select id="org-start-time" class="time-select"></select>
+            <span style="color:var(--muted);white-space:nowrap;font-size:13px">to</span>
+            <select id="org-end-time" class="time-select"></select>
+          </div>
+        </div>
+      </div>
+
+      <div id="options-mode-fields" style="display:none">
+        <div class="field">
+          <label>Date &amp; Time Options</label>
+          <div id="org-options-list"></div>
+          <button class="btn btn-secondary btn-sm" id="add-option-btn" onclick="addOption()" style="margin-top:4px">+ Add Option</button>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">Add 2–8 specific date &amp; time slots for people to vote on</div>
         </div>
       </div>
 
@@ -472,7 +570,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
           <label>Your Name</label>
           <input type="text" id="resp-name" placeholder="What do your friends call you?" maxlength="40">
         </div>
-        <div class="legend">
+        <div class="legend" id="fill-legend">
           <div class="legend-item"><div class="legend-dot" style="background:var(--avail)"></div> Available</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--maybe)"></div> Maybe</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--surface3)"></div> Can't</div>
@@ -480,9 +578,11 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
         </div>
       </div>
 
-      <div class="grid-outer">
+      <div class="grid-outer" id="fill-grid-outer">
         <div id="fill-grid" class="time-grid"></div>
       </div>
+
+      <div id="fill-options" style="display:none"></div>
 
       <div style="height:16px"></div>
       <button class="btn btn-avail btn-full" id="resp-submit-btn" onclick="submitResponse()">Submit My Availability ✓</button>
@@ -501,7 +601,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
         <div id="respondents-list" class="respondents"></div>
       </div>
 
-      <div class="legend" style="margin-bottom:10px;justify-content:flex-end">
+      <div class="legend" id="results-legend" style="margin-bottom:10px;justify-content:flex-end">
         <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.15)"></div> Few</div>
         <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.65)"></div> Most</div>
         <div class="legend-item" style="gap:6px"><span style="font-size:14px">⭐</span> Best slot</div>
@@ -509,9 +609,11 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
         <div class="legend-item" style="gap:4px"><span style="color:var(--maybe);font-weight:700">~</span> Maybe</div>
       </div>
 
-      <div class="grid-outer">
+      <div class="grid-outer" id="results-grid-outer">
         <div id="results-grid" class="time-grid"></div>
       </div>
+
+      <div id="results-options" class="opt-result-list" style="display:none"></div>
     </div>
   </div>
 
@@ -796,34 +898,42 @@ async function createPoll() {
   const name = document.getElementById('org-name').value.trim();
   if (!name) { toast('Give your event a name ✍️'); document.getElementById('org-name').focus(); return; }
 
-  if (!calState.rangeStart || !calState.rangeEnd) {
-    toast('Pick a date range on the calendar 📅');
-    return;
-  }
-
-  const startH = parseInt(document.getElementById('org-start-time').value);
-  const endH = parseInt(document.getElementById('org-end-time').value);
-  if (endH <= startH) { toast('End time must be after start time'); return; }
-
-  const dates = getDatesInRange(calState.rangeStart, calState.rangeEnd);
   const total = parseInt(document.getElementById('org-total').value) || 0;
-
   const btn = document.querySelector('[onclick="createPoll()"]');
   btn.disabled = true;
   btn.textContent = 'Creating…';
 
   try {
-    const docRef = await db.collection('polls').add({
+    let pollData = {
       n: name,
       d: document.getElementById('org-desc').value.trim(),
-      dates,
-      sh: startH,
-      eh: endH,
       tz: document.getElementById('org-tz').value,
       dl: document.getElementById('org-deadline').value || null,
       total: total || null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+
+    if (orgPollType === 'options') {
+      if (orgOptions.length < 2) { toast('Add at least 2 options 📅'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
+      for (const opt of orgOptions) {
+        if (!opt.date) { toast('Fill in a date for every option'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
+      }
+      pollData.type = 'options';
+      pollData.options = orgOptions.map(o => ({ date: o.date, hour: o.hour }));
+    } else {
+      if (!calState.rangeStart || !calState.rangeEnd) {
+        toast('Pick a date range on the calendar 📅');
+        btn.disabled = false; btn.textContent = 'Create Poll →'; return;
+      }
+      const startH = parseInt(document.getElementById('org-start-time').value);
+      const endH = parseInt(document.getElementById('org-end-time').value);
+      if (endH <= startH) { toast('End time must be after start time'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
+      pollData.dates = getDatesInRange(calState.rangeStart, calState.rangeEnd);
+      pollData.sh = startH;
+      pollData.eh = endH;
+    }
+
+    const docRef = await db.collection('polls').add(pollData);
 
     const url = buildShareURL(docRef.id);
     document.getElementById('org-share-url').textContent = url;
@@ -854,6 +964,18 @@ function initRespondent(pollId, poll) {
   appState.poll = poll;
   appState.pollId = pollId;
 
+  const isOptions = poll.type === 'options';
+
+  document.getElementById('fill-grid-outer').style.display = isOptions ? 'none' : '';
+  document.getElementById('fill-options').style.display = isOptions ? '' : 'none';
+  document.getElementById('fill-legend').style.display = isOptions ? 'none' : '';
+  document.getElementById('results-grid-outer').style.display = isOptions ? 'none' : '';
+  document.getElementById('results-legend').style.display = isOptions ? 'none' : '';
+  document.getElementById('results-options').style.display = isOptions ? '' : 'none';
+  if (isOptions) {
+    document.getElementById('resp-submit-btn').textContent = 'Submit My Votes ✓';
+  }
+
   renderEventHeader(poll);
   document.getElementById('fabCopy').style.display = 'flex';
   window._shareURL = buildShareURL(pollId);
@@ -866,7 +988,11 @@ function initRespondent(pollId, poll) {
       appState.responses = responses;
 
       renderEventHeader(poll);
-      renderFillGrid(poll, responses);
+      if (isOptions) {
+        renderOptionsVote(poll, responses);
+      } else {
+        renderFillGrid(poll, responses);
+      }
       renderResults(poll, responses);
     });
 }
@@ -889,12 +1015,16 @@ function renderEventHeader(poll) {
     ? `<div class="meta-pill">👥 ${appState.responses.length}/${poll.total} responded</div>`
     : `<div class="meta-pill">👥 ${appState.responses.length} responded</div>`;
 
+  const timePill = poll.type === 'options'
+    ? `<div class="meta-pill">🗓️ ${poll.options.length} options</div>`
+    : `<div class="meta-pill">🕐 ${formatHour(poll.sh)}–${formatHour(poll.eh)}</div>`;
+
   header.innerHTML = `
     <div class="event-name">${escapeHTML(poll.n)}</div>
     ${poll.d ? `<div style="color:var(--muted);font-size:14px;margin:6px 0">${escapeHTML(poll.d)}</div>` : ''}
     <div class="event-meta">
       ${totalPill}
-      <div class="meta-pill">🕐 ${formatHour(poll.sh)}–${formatHour(poll.eh)}</div>
+      ${timePill}
       <div class="meta-pill">🌍 ${tzShort}</div>
       ${deadlineHTML}
     </div>
@@ -1063,15 +1193,21 @@ async function submitResponse() {
     existing.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
 
+    const slotsData = poll.type === 'options'
+      ? optionSlotsToFirestore(fillSlots)
+      : slotsToFirestore(poll, fillSlots);
+
     await responsesRef.add({
       n: name,
-      slots: slotsToFirestore(poll, fillSlots),
+      slots: slotsData,
       submittedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     appState.myName = name;
 
-    const best = getBestSlot(poll, appState.responses);
+    const best = poll.type === 'options'
+      ? getBestOption(poll, appState.responses)
+      : getBestSlot(poll, appState.responses);
     appState.confirmedBestSlot = best;
     showConfirmation(poll, name, best, appState.responses);
   } catch (e) {
@@ -1135,6 +1271,25 @@ function renderResults(poll, responses) {
   // Respondent list
   const list = document.getElementById('respondents-list');
   list.innerHTML = '';
+
+  if (poll.type === 'options') {
+    if (poll.total) {
+      const pct = Math.round((responses.length / poll.total) * 100);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-label').textContent = `${responses.length} of ${poll.total} responded`;
+    } else {
+      document.getElementById('progress-fill').style.width = '100%';
+      document.getElementById('progress-label').textContent = `${responses.length} ${responses.length === 1 ? 'person' : 'people'} responded`;
+    }
+    responses.forEach(r => {
+      const chip = document.createElement('div');
+      chip.className = 'respondent-chip done';
+      chip.innerHTML = `<div class="chip-dot done"></div>${escapeHTML(r.n)}`;
+      list.appendChild(chip);
+    });
+    renderOptionsResultsContent(poll, responses);
+    return;
+  }
 
   if (poll.total) {
     const pct = Math.round((responses.length / poll.total) * 100);
@@ -1309,20 +1464,25 @@ function switchTab(tab) {
 
 function downloadICS() {
   const poll = appState.poll;
-  const best = appState.confirmedBestSlot || getBestSlot(poll, appState.responses);
+  let startDT, endDT;
+  const summary = poll.n;
 
-  let startDT, endDT, summary;
-  summary = poll.n;
-
-  if (best) {
-    const date = poll.dates[best.d];
-    const hour = poll.sh + best.h;
-    startDT = formatICSDate(date, hour, poll.tz);
-    endDT = formatICSDate(date, hour + 1, poll.tz);
+  if (poll.type === 'options') {
+    const best = appState.confirmedBestSlot || getBestOption(poll, appState.responses);
+    const opt = best ? poll.options[best.idx] : poll.options[0];
+    startDT = formatICSDate(opt.date, opt.hour, poll.tz);
+    endDT = formatICSDate(opt.date, opt.hour + 1, poll.tz);
   } else {
-    // Placeholder: first date, start hour
-    startDT = formatICSDate(poll.dates[0], poll.sh, poll.tz);
-    endDT = formatICSDate(poll.dates[0], poll.sh + 1, poll.tz);
+    const best = appState.confirmedBestSlot || getBestSlot(poll, appState.responses);
+    if (best) {
+      const date = poll.dates[best.d];
+      const hour = poll.sh + best.h;
+      startDT = formatICSDate(date, hour, poll.tz);
+      endDT = formatICSDate(date, hour + 1, poll.tz);
+    } else {
+      startDT = formatICSDate(poll.dates[0], poll.sh, poll.tz);
+      endDT = formatICSDate(poll.dates[0], poll.sh + 1, poll.tz);
+    }
   }
 
   const uid = randId(16) + '@whenfree';
@@ -1422,6 +1582,242 @@ async function init() {
     showView('organizer');
     initOrganizer();
   }
+}
+
+// ═══════════════════════════════════════
+//  OPTIONS POLL TYPE — ORGANIZER
+// ═══════════════════════════════════════
+
+let orgPollType = 'grid';
+let orgOptions = [];
+
+function switchPollType(type) {
+  orgPollType = type;
+  document.getElementById('type-btn-grid').classList.toggle('active', type === 'grid');
+  document.getElementById('type-btn-options').classList.toggle('active', type === 'options');
+  document.getElementById('grid-mode-fields').style.display = type === 'grid' ? '' : 'none';
+  document.getElementById('options-mode-fields').style.display = type === 'options' ? '' : 'none';
+  document.getElementById('type-hint').textContent = type === 'grid'
+    ? 'Respondents mark their availability across a date range'
+    : 'Propose specific times — respondents vote on each one';
+}
+
+function addOption() {
+  if (orgOptions.length >= 8) { toast('Max 8 options'); return; }
+  const today = new Date().toISOString().slice(0, 10);
+  orgOptions.push({ date: today, hour: 18 });
+  renderOptionsBuilder();
+}
+
+function removeOption(idx) {
+  orgOptions.splice(idx, 1);
+  renderOptionsBuilder();
+}
+
+function renderOptionsBuilder() {
+  const list = document.getElementById('org-options-list');
+  list.innerHTML = '';
+  const today = new Date().toISOString().slice(0, 10);
+
+  orgOptions.forEach((opt, idx) => {
+    const row = document.createElement('div');
+    row.className = 'option-row';
+
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.min = today;
+    dateInput.value = opt.date;
+    dateInput.onchange = () => { orgOptions[idx].date = dateInput.value; };
+
+    const hourSelect = document.createElement('select');
+    for (let h = 0; h < 24; h++) {
+      const o = document.createElement('option');
+      o.value = h; o.textContent = formatHour(h);
+      hourSelect.appendChild(o);
+    }
+    hourSelect.value = opt.hour;
+    hourSelect.onchange = () => { orgOptions[idx].hour = parseInt(hourSelect.value); };
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'opt-remove-btn';
+    removeBtn.innerHTML = '✕';
+    removeBtn.onclick = () => removeOption(idx);
+
+    row.appendChild(dateInput);
+    row.appendChild(hourSelect);
+    row.appendChild(removeBtn);
+    list.appendChild(row);
+  });
+
+  const addBtn = document.getElementById('add-option-btn');
+  if (addBtn) addBtn.style.display = orgOptions.length >= 8 ? 'none' : '';
+}
+
+// ═══════════════════════════════════════
+//  OPTIONS POLL TYPE — SLOTS CONVERSION
+// ═══════════════════════════════════════
+
+function optionSlotsToFirestore(slots) {
+  const map = {};
+  for (const [key, val] of Object.entries(slots)) {
+    if (!val) continue;
+    map[String(key)] = val === 1 ? 'available' : 'maybe';
+  }
+  return map;
+}
+
+function optionSlotsFromFirestore(map) {
+  if (!map) return {};
+  const slots = {};
+  for (const [key, status] of Object.entries(map)) {
+    const idx = parseInt(key);
+    if (!isNaN(idx)) slots[idx] = status === 'available' ? 1 : 2;
+  }
+  return slots;
+}
+
+function getBestOption(poll, responses) {
+  if (!responses.length) return null;
+  let best = null;
+  let bestScore = 0;
+  poll.options.forEach((opt, idx) => {
+    let score = 0;
+    responses.forEach(r => {
+      const s = optionSlotsFromFirestore(r.slots);
+      if (s[idx] === 1) score += 2;
+      else if (s[idx] === 2) score += 1;
+    });
+    if (score > bestScore) { bestScore = score; best = { idx, score }; }
+  });
+  return best;
+}
+
+// ═══════════════════════════════════════
+//  OPTIONS POLL TYPE — RESPONDENT FILL
+// ═══════════════════════════════════════
+
+function renderOptionsVote(poll, responses) {
+  const container = document.getElementById('fill-options');
+  container.innerHTML = '';
+  const voteList = document.createElement('div');
+  voteList.className = 'vote-list';
+
+  poll.options.forEach((opt, idx) => {
+    const d = new Date(opt.date + 'T00:00:00');
+    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' · ' + formatHour(opt.hour);
+
+    let availCount = 0, maybeCount = 0;
+    responses.forEach(r => {
+      const s = optionSlotsFromFirestore(r.slots);
+      if (s[idx] === 1) availCount++;
+      else if (s[idx] === 2) maybeCount++;
+    });
+
+    const state = fillSlots[idx] || 0;
+    const otherTotal = availCount + maybeCount;
+    const otherText = otherTotal > 0 ? `${availCount} available · ${maybeCount} maybe` : 'No votes yet';
+
+    const row = document.createElement('div');
+    row.className = 'vote-row' + (state === 1 ? ' voted-avail' : state === 2 ? ' voted-maybe' : '');
+    row.id = `vr-${idx}`;
+    row.innerHTML = `
+      <div class="vote-option-label">${label}</div>
+      <div class="vote-other-count">${otherText}</div>
+      <div class="vote-btn-group">
+        <button class="vote-btn${state === 1 ? ' sel-avail' : ''}" onclick="setOptionVote(${idx}, 1, event)">✓ Available</button>
+        <button class="vote-btn${state === 2 ? ' sel-maybe' : ''}" onclick="setOptionVote(${idx}, 2, event)">~ Maybe</button>
+        <button class="vote-btn${state === 0 ? ' sel-none' : ''}" onclick="setOptionVote(${idx}, 0, event)">✗ Can't</button>
+      </div>
+    `;
+    voteList.appendChild(row);
+  });
+
+  container.appendChild(voteList);
+}
+
+function setOptionVote(idx, val, e) {
+  if (e) { e.currentTarget.classList.add('pop'); setTimeout(() => e.currentTarget.classList.remove('pop'), 250); }
+  fillSlots[idx] = val;
+  const row = document.getElementById(`vr-${idx}`);
+  if (!row) return;
+  row.classList.remove('voted-avail', 'voted-maybe');
+  if (val === 1) row.classList.add('voted-avail');
+  else if (val === 2) row.classList.add('voted-maybe');
+  const btns = row.querySelectorAll('.vote-btn');
+  btns[0].className = 'vote-btn' + (val === 1 ? ' sel-avail' : '');
+  btns[1].className = 'vote-btn' + (val === 2 ? ' sel-maybe' : '');
+  btns[2].className = 'vote-btn' + (val === 0 ? ' sel-none' : '');
+}
+
+// ═══════════════════════════════════════
+//  OPTIONS POLL TYPE — RESULTS
+// ═══════════════════════════════════════
+
+function renderOptionsResultsContent(poll, responses) {
+  const best = getBestOption(poll, responses);
+
+  const banner = document.getElementById('best-slot-banner');
+  if (best !== null) {
+    const opt = poll.options[best.idx];
+    const d = new Date(opt.date + 'T00:00:00');
+    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + formatHour(opt.hour);
+    const availCount = responses.filter(r => optionSlotsFromFirestore(r.slots)[best.idx] === 1).length;
+    const maybeCount = responses.filter(r => optionSlotsFromFirestore(r.slots)[best.idx] === 2).length;
+    banner.style.display = 'block';
+    banner.innerHTML = `
+      <div class="best-slot-label">⭐ Best Option</div>
+      <div class="best-slot-time">${label}</div>
+      <div class="best-slot-stat">${availCount} available · ${maybeCount} maybe</div>
+    `;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  let maxScore = 1;
+  poll.options.forEach((opt, idx) => {
+    let score = 0;
+    responses.forEach(r => {
+      const s = optionSlotsFromFirestore(r.slots);
+      if (s[idx] === 1) score += 2;
+      else if (s[idx] === 2) score += 1;
+    });
+    if (score > maxScore) maxScore = score;
+  });
+
+  const container = document.getElementById('results-options');
+  container.innerHTML = '';
+
+  poll.options.forEach((opt, idx) => {
+    const d = new Date(opt.date + 'T00:00:00');
+    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + formatHour(opt.hour);
+
+    let score = 0;
+    const availNames = [], maybeNames = [];
+    responses.forEach(r => {
+      const s = optionSlotsFromFirestore(r.slots);
+      if (s[idx] === 1) { score += 2; availNames.push(r.n); }
+      else if (s[idx] === 2) { score += 1; maybeNames.push(r.n); }
+    });
+
+    const isBest = best && best.idx === idx;
+    const barPct = Math.round((score / maxScore) * 100);
+
+    const row = document.createElement('div');
+    row.className = 'opt-result-row' + (isBest ? ' opt-best' : '');
+
+    const namePills = [
+      ...availNames.map(n => `<span class="opt-name-pill avail">✓ ${escapeHTML(n)}</span>`),
+      ...maybeNames.map(n => `<span class="opt-name-pill maybe">~ ${escapeHTML(n)}</span>`)
+    ].join('');
+
+    row.innerHTML = `
+      <div class="opt-result-label">${isBest ? '⭐ ' : ''}${label}</div>
+      <div class="opt-result-bar-wrap"><div class="opt-result-bar" style="width:${barPct}%"></div></div>
+      <div class="opt-result-stats">${availNames.length} available · ${maybeNames.length} maybe</div>
+      ${namePills ? `<div class="opt-result-names">${namePills}</div>` : ''}
+    `;
+    container.appendChild(row);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);
