@@ -376,6 +376,10 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
   .grid-date-header { min-width: 54px; }
 }
 
+/* ── ICONS ── */
+.icon { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.confirm-icon { margin-bottom: 16px; display: flex; align-items: center; justify-content: center; }
+
 /* ── HIDDEN / VIEWS ── */
 .view { display: none; }
 .view.active { display: block; }
@@ -469,7 +473,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 
 <div id="tooltip" class="tooltip"></div>
 <div id="toast" class="toast"></div>
-<button class="fab" id="fabCopy" onclick="copyLink()" style="display:none">🔗 Copy Link</button>
+<button class="fab" id="fabCopy" onclick="copyLink()" style="display:none"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Copy Link</button>
 
 <div class="app">
   <!-- ══ ORGANIZER VIEW ══ -->
@@ -480,7 +484,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
     </div>
 
     <div class="card fade-up">
-      <button id="edit-back-btn" class="btn btn-ghost btn-sm" onclick="exitEditMode()" style="display:none;margin-bottom:12px">← Back to Poll</button>
+      <button id="edit-back-btn" class="btn btn-ghost btn-sm" onclick="exitEditMode()" style="display:none;margin-bottom:12px"><svg class="icon" width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back to Poll</button>
       <div class="form-title" id="org-form-title">Create a Poll</div>
 
       <div class="field">
@@ -495,8 +499,8 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       <div class="field">
         <label>Poll Type</label>
         <div class="type-toggle">
-          <button class="type-btn active" id="type-btn-grid" onclick="switchPollType('grid')">📅 Availability Grid</button>
-          <button class="type-btn" id="type-btn-options" onclick="switchPollType('options')">🗓️ Specific Options</button>
+          <button class="type-btn active" id="type-btn-grid" onclick="switchPollType('grid')"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> Availability Grid</button>
+          <button class="type-btn" id="type-btn-options" onclick="switchPollType('options')"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Specific Options</button>
         </div>
         <div id="type-hint" style="font-size:12px;color:var(--muted);margin-top:6px">Respondents mark their availability across a date range</div>
       </div>
@@ -553,11 +557,11 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
     </div>
 
     <div id="org-share-panel" class="share-panel fade-up" style="display:none">
-      <div class="share-title">🎉 Your poll is ready!</div>
+      <div class="share-title">Your poll is ready!</div>
       <div class="share-sub">Share this link — anyone with it can fill out their availability.</div>
       <div class="share-url" id="org-share-url"></div>
       <div class="copy-row">
-        <button class="btn btn-primary" onclick="copyLink()" style="flex:1">📋 Copy Link</button>
+        <button class="btn btn-primary" onclick="copyLink()" style="flex:1"><svg class="icon" width="15" height="15" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Link</button>
         <button class="btn btn-secondary" onclick="openPoll()">Open →</button>
       </div>
     </div>
@@ -566,11 +570,11 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
   <!-- ══ RESPONDENT / RESULTS VIEW ══ -->
   <div id="view-respond" class="view">
     <div id="resp-event-header" class="event-header fade-up"></div>
-    <button id="edit-poll-btn" class="btn btn-ghost btn-sm" onclick="enterEditMode()" style="display:none;margin-top:-8px;margin-bottom:8px">✏️ Edit Poll</button>
+    <button id="edit-poll-btn" class="btn btn-ghost btn-sm" onclick="enterEditMode()" style="display:none;margin-top:-8px;margin-bottom:8px"><svg class="icon" width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit Poll</button>
 
     <div class="tab-bar" id="resp-tabs">
-      <div class="tab active" data-tab="fill" onclick="switchTab('fill')">✏️ Fill Out</div>
-      <div class="tab" data-tab="results" onclick="switchTab('results')">📊 Results</div>
+      <div class="tab active" data-tab="fill" onclick="switchTab('fill')"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Fill Out</div>
+      <div class="tab" data-tab="results" onclick="switchTab('results')"><svg class="icon" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Results</div>
     </div>
 
     <!-- Fill Out Tab -->
@@ -595,7 +599,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       <div id="fill-options" style="display:none"></div>
 
       <div style="height:16px"></div>
-      <button class="btn btn-avail btn-full" id="resp-submit-btn" onclick="submitResponse()">Submit My Availability ✓</button>
+      <button class="btn btn-avail btn-full" id="resp-submit-btn" onclick="submitResponse()"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"/></svg> Submit My Availability</button>
     </div>
 
     <!-- Results Tab -->
@@ -614,9 +618,9 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       <div class="legend" id="results-legend" style="margin-bottom:10px;justify-content:flex-end">
         <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.15)"></div> Few</div>
         <div class="legend-item"><div class="legend-dot" style="background:rgba(6,214,160,0.65)"></div> Most</div>
-        <div class="legend-item" style="gap:6px"><span style="font-size:14px">⭐</span> Best slot</div>
-        <div class="legend-item" style="gap:4px"><span style="color:var(--avail);font-weight:700">✓</span> Available</div>
-        <div class="legend-item" style="gap:4px"><span style="color:var(--maybe);font-weight:700">~</span> Maybe</div>
+        <div class="legend-item" style="gap:6px"><svg class="icon" width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="stroke:var(--accent2)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Best slot</div>
+        <div class="legend-item" style="gap:4px"><svg class="icon" width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="stroke:var(--avail)"><polyline points="20 6 9 17 4 12"/></svg> Available</div>
+        <div class="legend-item" style="gap:4px"><svg class="icon" width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="stroke:var(--maybe)"><line x1="5" y1="12" x2="19" y2="12"/></svg> Maybe</div>
       </div>
 
       <div class="grid-outer" id="results-grid-outer">
@@ -633,12 +637,12 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
       <div class="logo"><span class="logo-dot"></span>WhenFree</div>
     </div>
     <div class="card confirm-card fade-up">
-      <div class="confirm-emoji" id="confirm-emoji">🎉</div>
+      <div class="confirm-icon" id="confirm-emoji"></div>
       <div class="confirm-title" id="confirm-title">You're in!</div>
       <div class="confirm-sub" id="confirm-sub">Your availability has been saved.</div>
       <div class="confirm-actions">
-        <button class="btn btn-avail btn-full" onclick="downloadICS()">📅 Add to Calendar (.ics)</button>
-        <button class="btn btn-secondary btn-full" onclick="copyLink()">🔗 Copy & Share Link</button>
+        <button class="btn btn-avail btn-full" onclick="downloadICS()"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Add to Calendar</button>
+        <button class="btn btn-secondary btn-full" onclick="copyLink()"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Copy & Share Link</button>
         <button class="btn btn-ghost btn-full" onclick="goToResults()">View Results →</button>
       </div>
     </div>
@@ -648,6 +652,35 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 <script src="src/lib/firebase.js"></script>
 
 <script>
+// ═══════════════════════════════════════
+//  ICON SYSTEM (Lucide paths, inline SVG)
+// ═══════════════════════════════════════
+
+const ICONS = {
+  pencil:          '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  'bar-chart-2':   '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  copy:            '<rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  calendar:        '<rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  link:            '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  star:            '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  clock:           '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  globe:           '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  users:           '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  'alert-triangle':'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  check:           '<polyline points="20 6 9 17 4 12"/>',
+  minus:           '<line x1="5" y1="12" x2="19" y2="12"/>',
+  'x-mark':        '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  'check-circle':  '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  target:          '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  grid:            '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  list:            '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  'arrow-left':    '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+};
+
+function icon(name, size = 16) {
+  return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${ICONS[name] || ''}</svg>`;
+}
+
 // ═══════════════════════════════════════
 //  UTILITIES
 // ═══════════════════════════════════════
@@ -993,7 +1026,7 @@ async function createPoll() {
     };
 
     if (orgPollType === 'options') {
-      if (orgOptions.length < 2) { toast('Add at least 2 options 📅'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
+      if (orgOptions.length < 2) { toast('Add at least 2 options'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
       for (const opt of orgOptions) {
         if (!opt.date) { toast('Fill in a date for every option'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
         if (opt.endHour <= opt.startHour) { toast('End time must be after start time for each option'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
@@ -1002,7 +1035,7 @@ async function createPoll() {
       pollData.options = orgOptions.map(o => ({ date: o.date, startHour: o.startHour, endHour: o.endHour }));
     } else {
       if (!calState.rangeStart || !calState.rangeEnd) {
-        toast('Pick a date range on the calendar 📅');
+        toast('Pick a date range on the calendar');
         btn.disabled = false; btn.textContent = 'Create Poll →'; return;
       }
       const startH = parseInt(document.getElementById('org-start-time').value);
@@ -1021,7 +1054,7 @@ async function createPoll() {
       fillSlots = {};
       showView('respond');
       initRespondent(editMode.pollId, snap.data());
-      toast('Poll updated ✓');
+      toast('Poll updated');
     } else {
       const docRef = await db.collection('polls').add(pollData);
       storeCreatedPoll(docRef.id);
@@ -1064,7 +1097,7 @@ function initRespondent(pollId, poll) {
   document.getElementById('results-legend').style.display = isOptions ? 'none' : '';
   document.getElementById('results-options').style.display = isOptions ? '' : 'none';
   if (isOptions) {
-    document.getElementById('resp-submit-btn').textContent = 'Submit My Votes ✓';
+    document.getElementById('resp-submit-btn').innerHTML = `${icon('check',16)} Submit My Votes`;
   }
 
   renderEventHeader(poll);
@@ -1099,17 +1132,17 @@ function renderEventHeader(poll) {
     const dlDate = new Date(poll.dl + 'T23:59:59');
     const dlStr = dlDate.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
     deadlineHTML = `<div class="meta-pill ${deadlinePassed ? 'deadline-expired' : ''}">
-      ${deadlinePassed ? '⚠️ Closed' : '⏰ Due'} ${dlStr}
+      ${deadlinePassed ? icon('alert-triangle',11)+' Closed' : icon('clock',11)+' Due'} ${dlStr}
     </div>`;
   }
 
   const totalPill = poll.total
-    ? `<div class="meta-pill">👥 ${appState.responses.length}/${poll.total} responded</div>`
-    : `<div class="meta-pill">👥 ${appState.responses.length} responded</div>`;
+    ? `<div class="meta-pill">${icon('users',11)} ${appState.responses.length}/${poll.total} responded</div>`
+    : `<div class="meta-pill">${icon('users',11)} ${appState.responses.length} responded</div>`;
 
   const timePill = poll.type === 'options'
-    ? `<div class="meta-pill">🗓️ ${poll.options.length} options</div>`
-    : `<div class="meta-pill">🕐 ${formatHour(poll.sh)}–${formatHour(poll.eh)}</div>`;
+    ? `<div class="meta-pill">${icon('list',11)} ${poll.options.length} options</div>`
+    : `<div class="meta-pill">${icon('clock',11)} ${formatHour(poll.sh)}–${formatHour(poll.eh)}</div>`;
 
   header.innerHTML = `
     <div class="event-name">${escapeHTML(poll.n)}</div>
@@ -1117,7 +1150,7 @@ function renderEventHeader(poll) {
     <div class="event-meta">
       ${totalPill}
       ${timePill}
-      <div class="meta-pill">🌍 ${tzShort}</div>
+      <div class="meta-pill">${icon('globe',11)} ${tzShort}</div>
       ${deadlineHTML}
     </div>
   `;
@@ -1224,16 +1257,16 @@ function updateFillCell(cell, key, responses, poll) {
     if (s[key] === 1 || s[key] === 2) count++;
   });
 
-  let icon = '';
-  if (state === 1) { cell.classList.add('avail'); icon = '✓'; }
-  else if (state === 2) { cell.classList.add('maybe'); icon = '~'; }
+  let mark = '';
+  if (state === 1) { cell.classList.add('avail'); mark = icon('check', 18); }
+  else if (state === 2) { cell.classList.add('maybe'); mark = icon('minus', 18); }
 
   let countHTML = '';
   if (count > 0) {
     countHTML = `<div class="cell-count has-count">${count}</div>`;
   }
 
-  cell.innerHTML = `<span class="cell-icon">${icon}</span>${countHTML}`;
+  cell.innerHTML = `<span class="cell-icon">${mark}</span>${countHTML}`;
 }
 
 function cycleSlot(di, h, poll, responses) {
@@ -1315,11 +1348,11 @@ function showConfirmation(poll, name, bestSlot, responses) {
 
   document.getElementById('confirm-title').textContent = `You're in, ${name.split(' ')[0]}!`;
   document.getElementById('confirm-sub').textContent =
-    `${count} of ${total} ${total === 1 ? 'person' : 'people'} ${count === 1 ? 'has' : 'have'} responded.${bestSlot ? ' Best time found! 🎯' : ' Waiting on more responses.'}`;
+    `${count} of ${total} ${total === 1 ? 'person' : 'people'} ${count === 1 ? 'has' : 'have'} responded.${bestSlot ? ' Best time found!' : ' Waiting on more responses.'}`;
 
-  if (bestSlot) {
-    document.getElementById('confirm-emoji').textContent = '🎯';
-  }
+  document.getElementById('confirm-emoji').innerHTML = bestSlot
+    ? icon('target', 52)
+    : icon('check-circle', 52);
 
   showView('confirm');
 }
@@ -1416,7 +1449,7 @@ function renderResults(poll, responses) {
 
     banner.style.display = 'block';
     banner.innerHTML = `
-      <div class="best-slot-label">⭐ Best Time</div>
+      <div class="best-slot-label">${icon('star',13)} Best Time</div>
       <div class="best-slot-time">${formatFullDateTime(dateStr, hour, poll.tz)}</div>
       <div class="best-slot-stat">${availCount} available · ${maybeCount} maybe</div>
     `;
@@ -1488,10 +1521,10 @@ function renderResults(poll, responses) {
         const totalCount = availNames.length + maybeNames.length;
         cell.innerHTML = `
           <div class="cell-result-count">${totalCount}</div>
-          <div class="cell-result-label">${isBest ? '⭐' : 'free'}</div>
+          <div class="cell-result-label">${isBest ? icon('star',12) : 'free'}</div>
         `;
       } else if (isBest) {
-        cell.innerHTML = '<div class="cell-result-label">⭐</div>';
+        cell.innerHTML = `<div class="cell-result-label">${icon('star',12)}</div>`;
       }
 
       // Tooltip
@@ -1608,7 +1641,7 @@ function downloadICS() {
   a.download = `${poll.n.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.ics`;
   a.click();
   URL.revokeObjectURL(url);
-  toast('Calendar file downloaded! 📅');
+  toast('Calendar file downloaded');
 }
 
 function formatICSDate(dateStr, hour, tz) {
@@ -1634,7 +1667,7 @@ async function copyLink() {
   const url = window._shareURL || location.href;
   try {
     await navigator.clipboard.writeText(url);
-    toast('Link copied! 🔗');
+    toast('Link copied');
   } catch (e) {
     // Fallback
     const ta = document.createElement('textarea');
@@ -1642,7 +1675,7 @@ async function copyLink() {
     document.body.appendChild(ta); ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    toast('Link copied! 🔗');
+    toast('Link copied');
   }
 }
 
@@ -1840,9 +1873,9 @@ function renderOptionsVote(poll, responses) {
       <div class="vote-option-label">${label}</div>
       <div class="vote-other-count">${otherText}</div>
       <div class="vote-btn-group">
-        <button class="vote-btn${state === 1 ? ' sel-avail' : ''}" onclick="setOptionVote(${idx}, 1, event)">✓ Available</button>
-        <button class="vote-btn${state === 2 ? ' sel-maybe' : ''}" onclick="setOptionVote(${idx}, 2, event)">~ Maybe</button>
-        <button class="vote-btn${state === 0 ? ' sel-none' : ''}" onclick="setOptionVote(${idx}, 0, event)">✗ Can't</button>
+        <button class="vote-btn${state === 1 ? ' sel-avail' : ''}" onclick="setOptionVote(${idx}, 1, event)">${icon('check',14)} Available</button>
+        <button class="vote-btn${state === 2 ? ' sel-maybe' : ''}" onclick="setOptionVote(${idx}, 2, event)">${icon('minus',14)} Maybe</button>
+        <button class="vote-btn${state === 0 ? ' sel-none' : ''}" onclick="setOptionVote(${idx}, 0, event)">${icon('x-mark',14)} Can't</button>
       </div>
     `;
     voteList.appendChild(row);
@@ -1880,7 +1913,7 @@ function renderOptionsResultsContent(poll, responses) {
     const maybeCount = responses.filter(r => optionSlotsFromFirestore(r.slots)[best.idx] === 2).length;
     banner.style.display = 'block';
     banner.innerHTML = `
-      <div class="best-slot-label">⭐ Best Option</div>
+      <div class="best-slot-label">${icon('star',13)} Best Option</div>
       <div class="best-slot-time">${label}</div>
       <div class="best-slot-stat">${availCount} available · ${maybeCount} maybe</div>
     `;
@@ -1920,12 +1953,12 @@ function renderOptionsResultsContent(poll, responses) {
     row.className = 'opt-result-row' + (isBest ? ' opt-best' : '');
 
     const namePills = [
-      ...availNames.map(n => `<span class="opt-name-pill avail">✓ ${escapeHTML(n)}</span>`),
-      ...maybeNames.map(n => `<span class="opt-name-pill maybe">~ ${escapeHTML(n)}</span>`)
+      ...availNames.map(n => `<span class="opt-name-pill avail">${icon('check',10)} ${escapeHTML(n)}</span>`),
+      ...maybeNames.map(n => `<span class="opt-name-pill maybe">${icon('minus',10)} ${escapeHTML(n)}</span>`)
     ].join('');
 
     row.innerHTML = `
-      <div class="opt-result-label">${isBest ? '⭐ ' : ''}${label}</div>
+      <div class="opt-result-label">${isBest ? icon('star',15)+' ' : ''}${label}</div>
       <div class="opt-result-bar-wrap"><div class="opt-result-bar" style="width:${barPct}%"></div></div>
       <div class="opt-result-stats">${availNames.length} available · ${maybeNames.length} maybe</div>
       ${namePills ? `<div class="opt-result-names">${namePills}</div>` : ''}
