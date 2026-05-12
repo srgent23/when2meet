@@ -1,94 +1,73 @@
 # When2Meet
 
-A lightweight scheduling poll tool for small friend groups. Think Doodle or WhenToMeet, but stripped down, mobile-first, and built to live in a group chat.
+A lightweight scheduling poll tool for small groups. Mobile-first, no accounts required.
 
-**No accounts. No backend. No database.** Everything runs client-side — the entire poll (config + all responses) travels in a single shareable URL.
+---
+
+## Poll types
+
+### Availability Grid
+
+The organizer picks a date range (up to 2 weeks) and a time window. Respondents tap cells in a grid to mark themselves **Available ✓**, **Maybe ~**, or leave blank. Results show as a heatmap with the best slot highlighted automatically.
+
+### Specific Options
+
+The organizer proposes up to 8 specific date + time range slots (e.g. "Sat May 16 · 6 PM – 10 PM"). Respondents vote **Available**, **Maybe**, or **Can't** on each one. Results rank the options by score.
 
 ---
 
 ## Usage
 
-Open `index.html` in any browser. No build step, no server required.
-
-### 1. Create a poll (organizer)
+### 1. Create a poll
 
 - Enter an event name and optional description
-- Pick a date range on the calendar (up to 2 weeks)
-- Set a time range and timezone (auto-detected from your browser)
-- Optionally add a response deadline and expected headcount
-- Hit **Create Poll** → copy the link → drop it in the group chat
+- Choose a poll type: **Availability Grid** or **Specific Options**
+- Set your timezone (auto-detected) and optionally a response deadline and expected headcount
+- Hit **Create Poll** → share the link
 
-### 2. Fill out availability (respondents)
+### 2. Fill out availability
 
-- Open the link; enter your name
-- Tap grid cells to cycle: **Available ✓** → **Maybe ~** → *(blank)*
-- Use the **All / None** buttons at the top of each column to fill a whole day at once
-- Hit **Submit** → the URL updates with your response included → copy and reshare
+**Grid:** Tap cells to cycle Available → Maybe → blank. Use the **All / None** column shortcuts to fill quickly.
+
+**Options:** Tap **Available**, **Maybe**, or **Can't** for each proposed time slot.
+
+- Enter your name and hit **Submit**
+- Results update in real time for everyone with the link
 
 ### 3. View results
 
 - Switch to the **Results** tab anytime
-- Heatmap grid shows slot popularity (darker green = more people free)
-- ⭐ marks the single best time slot automatically
-- Hover or tap a cell to see exactly who is available / maybe
+- Grid mode: heatmap shows slot popularity; hover or tap a cell to see who's in
+- Options mode: ranked list with score bars and name tags per slot
+- ⭐ marks the best time automatically
 
 ### 4. Add to calendar
 
 - After submitting, tap **Add to Calendar** to download a `.ics` file
-- Uses the best slot if one is determined, otherwise uses a placeholder time
-- Works with Apple Calendar, Google Calendar, and Outlook
+- Uses the best slot; works with Apple Calendar, Google Calendar, and Outlook
+
+### 5. Edit a poll
+
+- If you created the poll, an **✏️ Edit Poll** button appears when you reopen it
+- Change the name, dates, options, deadline, or headcount and save
+- Editing is tied to the device/browser you created the poll on
 
 ---
 
-## How state works
+## Stack
 
-All data lives in the URL hash as a base64-encoded JSON blob:
-
-```
-https://yoursite.com/index.html#<base64>
-```
-
-The blob contains:
-- Poll config (name, dates, time range, timezone, deadline)
-- All responses as compact digit strings (`0` = none, `1` = available, `2` = maybe)
-
-When someone submits, their response is added to the blob and the URL updates. Sharing the new URL propagates everyone's responses to the next person. No server involved at any point.
-
-`localStorage` is used only to remember your name for a given poll so your slots pre-fill if you open the link again.
+- Single `index.html` file — no build step
+- [Firebase Firestore](https://firebase.google.com/docs/firestore) for real-time data storage
+- [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) font
+- `.ics` calendar files generated client-side
 
 ---
 
-## Features
-
-- Single HTML file, works offline after first load
-- Mobile-first grid with large tap targets and horizontal scroll
-- Per-column Select All / Clear All shortcuts
-- Live count badges on each cell (how many others picked it)
-- Edit your own response — just resubmit with the same name
-- Floating **Copy Link** button always visible for easy resharing
-- Dark theme, [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) font
-- `.ics` generated entirely client-side using the iCalendar spec
-
----
-
-## Constraints & limits
+## Limits
 
 | Thing | Limit |
 |---|---|
-| Date range | Up to 14 days |
-| Time range | Any start/end hour (same day) |
-| Respondents | No hard limit; URL grows ~85 chars per person |
+| Date range (grid) | Up to 14 days |
+| Options (specific) | Up to 8 slots |
 | Name length | 40 characters |
 | Event name | 80 characters |
-
-URL length stays manageable: a 14-day poll × 6-hour window × 10 people encodes to roughly 1,500–1,800 characters total.
-
----
-
-## No-backend tradeoff
-
-Because responses accumulate in the URL, **each person needs to reshare the updated link after submitting** so others get their response. The flow is:
-
-1. Organizer shares link → Person A fills out → reshares updated link → Person B fills out → reshares → etc.
-
-This is intentional — it keeps the tool completely serverless while still letting everyone see the combined results.
