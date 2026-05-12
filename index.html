@@ -389,10 +389,12 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 
 /* ── OPTIONS BUILDER ── */
 .option-row {
-  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;
   background: var(--surface2); border-radius: 10px; padding: 10px 12px;
 }
-.option-row input[type="date"], .option-row select { flex: 1; margin: 0; }
+.option-row input[type="date"] { margin: 0; }
+.opt-time-row { display: flex; gap: 8px; align-items: center; }
+.opt-time-row select { flex: 1; margin: 0; }
 .opt-remove-btn {
   background: var(--surface3); border: none; color: var(--muted); cursor: pointer;
   width: 30px; height: 30px; border-radius: 8px; font-size: 14px; flex-shrink: 0;
@@ -917,9 +919,10 @@ async function createPoll() {
       if (orgOptions.length < 2) { toast('Add at least 2 options 📅'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
       for (const opt of orgOptions) {
         if (!opt.date) { toast('Fill in a date for every option'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
+        if (opt.endHour <= opt.startHour) { toast('End time must be after start time for each option'); btn.disabled = false; btn.textContent = 'Create Poll →'; return; }
       }
       pollData.type = 'options';
-      pollData.options = orgOptions.map(o => ({ date: o.date, hour: o.hour }));
+      pollData.options = orgOptions.map(o => ({ date: o.date, startHour: o.startHour, endHour: o.endHour }));
     } else {
       if (!calState.rangeStart || !calState.rangeEnd) {
         toast('Pick a date range on the calendar 📅');
@@ -1470,8 +1473,8 @@ function downloadICS() {
   if (poll.type === 'options') {
     const best = appState.confirmedBestSlot || getBestOption(poll, appState.responses);
     const opt = best ? poll.options[best.idx] : poll.options[0];
-    startDT = formatICSDate(opt.date, opt.hour, poll.tz);
-    endDT = formatICSDate(opt.date, opt.hour + 1, poll.tz);
+    startDT = formatICSDate(opt.date, opt.startHour, poll.tz);
+    endDT = formatICSDate(opt.date, opt.endHour, poll.tz);
   } else {
     const best = appState.confirmedBestSlot || getBestSlot(poll, appState.responses);
     if (best) {
@@ -1605,7 +1608,7 @@ function switchPollType(type) {
 function addOption() {
   if (orgOptions.length >= 8) { toast('Max 8 options'); return; }
   const today = new Date().toISOString().slice(0, 10);
-  orgOptions.push({ date: today, hour: 18 });
+  orgOptions.push({ date: today, startHour: 18, endHour: 22 });
   renderOptionsBuilder();
 }
 
@@ -1629,28 +1632,53 @@ function renderOptionsBuilder() {
     dateInput.value = opt.date;
     dateInput.onchange = () => { orgOptions[idx].date = dateInput.value; };
 
-    const hourSelect = document.createElement('select');
+    const timeRow = document.createElement('div');
+    timeRow.className = 'opt-time-row';
+
+    const startSelect = document.createElement('select');
+    const endSelect = document.createElement('select');
     for (let h = 0; h < 24; h++) {
-      const o = document.createElement('option');
-      o.value = h; o.textContent = formatHour(h);
-      hourSelect.appendChild(o);
+      const o1 = document.createElement('option'); o1.value = h; o1.textContent = formatHour(h);
+      const o2 = document.createElement('option'); o2.value = h; o2.textContent = formatHour(h);
+      startSelect.appendChild(o1);
+      endSelect.appendChild(o2);
     }
-    hourSelect.value = opt.hour;
-    hourSelect.onchange = () => { orgOptions[idx].hour = parseInt(hourSelect.value); };
+    startSelect.value = opt.startHour;
+    endSelect.value = opt.endHour;
+    startSelect.onchange = () => { orgOptions[idx].startHour = parseInt(startSelect.value); };
+    endSelect.onchange = () => { orgOptions[idx].endHour = parseInt(endSelect.value); };
+
+    const sep = document.createElement('span');
+    sep.textContent = '–';
+    sep.style.cssText = 'color:var(--muted);white-space:nowrap;font-size:13px;flex-shrink:0';
 
     const removeBtn = document.createElement('button');
     removeBtn.className = 'opt-remove-btn';
     removeBtn.innerHTML = '✕';
     removeBtn.onclick = () => removeOption(idx);
 
+    timeRow.appendChild(startSelect);
+    timeRow.appendChild(sep);
+    timeRow.appendChild(endSelect);
+    timeRow.appendChild(removeBtn);
+
     row.appendChild(dateInput);
-    row.appendChild(hourSelect);
-    row.appendChild(removeBtn);
+    row.appendChild(timeRow);
     list.appendChild(row);
   });
 
   const addBtn = document.getElementById('add-option-btn');
   if (addBtn) addBtn.style.display = orgOptions.length >= 8 ? 'none' : '';
+}
+
+function formatOptionLabel(opt, longDate = false) {
+  const d = new Date(opt.date + 'T00:00:00');
+  const dateStr = d.toLocaleDateString('en-US', {
+    weekday: longDate ? 'long' : 'short',
+    month: longDate ? 'long' : 'short',
+    day: 'numeric'
+  });
+  return `${dateStr} · ${formatHour(opt.startHour)} – ${formatHour(opt.endHour)}`;
 }
 
 // ═══════════════════════════════════════
@@ -1703,8 +1731,7 @@ function renderOptionsVote(poll, responses) {
   voteList.className = 'vote-list';
 
   poll.options.forEach((opt, idx) => {
-    const d = new Date(opt.date + 'T00:00:00');
-    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' · ' + formatHour(opt.hour);
+    const label = formatOptionLabel(opt);
 
     let availCount = 0, maybeCount = 0;
     responses.forEach(r => {
@@ -1759,8 +1786,7 @@ function renderOptionsResultsContent(poll, responses) {
   const banner = document.getElementById('best-slot-banner');
   if (best !== null) {
     const opt = poll.options[best.idx];
-    const d = new Date(opt.date + 'T00:00:00');
-    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + formatHour(opt.hour);
+    const label = formatOptionLabel(opt, true);
     const availCount = responses.filter(r => optionSlotsFromFirestore(r.slots)[best.idx] === 1).length;
     const maybeCount = responses.filter(r => optionSlotsFromFirestore(r.slots)[best.idx] === 2).length;
     banner.style.display = 'block';
@@ -1788,8 +1814,7 @@ function renderOptionsResultsContent(poll, responses) {
   container.innerHTML = '';
 
   poll.options.forEach((opt, idx) => {
-    const d = new Date(opt.date + 'T00:00:00');
-    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + formatHour(opt.hour);
+    const label = formatOptionLabel(opt, true);
 
     let score = 0;
     const availNames = [], maybeNames = [];
