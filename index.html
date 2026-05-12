@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>WhenFree — Find a time, no drama</title>
+<title>When2Meet | Find a time</title>
+<meta property="og:title" content="When2Meet | Find a time">
+<meta property="og:description" content="Find a time that works for everyone.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="When2Meet | Find a time">
+<meta name="twitter:description" content="Find a time that works for everyone.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -474,7 +480,8 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
     </div>
 
     <div class="card fade-up">
-      <div class="form-title">Create a Poll</div>
+      <button id="edit-back-btn" class="btn btn-ghost btn-sm" onclick="exitEditMode()" style="display:none;margin-bottom:12px">← Back to Poll</button>
+      <div class="form-title" id="org-form-title">Create a Poll</div>
 
       <div class="field">
         <label>Event Name</label>
@@ -542,7 +549,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
         </div>
       </div>
 
-      <button class="btn btn-primary btn-full" onclick="createPoll()">Create Poll →</button>
+      <button class="btn btn-primary btn-full" id="org-submit-btn" onclick="createPoll()">Create Poll →</button>
     </div>
 
     <div id="org-share-panel" class="share-panel fade-up" style="display:none">
@@ -559,6 +566,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
   <!-- ══ RESPONDENT / RESULTS VIEW ══ -->
   <div id="view-respond" class="view">
     <div id="resp-event-header" class="event-header fade-up"></div>
+    <button id="edit-poll-btn" class="btn btn-ghost btn-sm" onclick="enterEditMode()" style="display:none;margin-top:-8px;margin-bottom:8px">✏️ Edit Poll</button>
 
     <div class="tab-bar" id="resp-tabs">
       <div class="tab active" data-tab="fill" onclick="switchTab('fill')">✏️ Fill Out</div>
@@ -688,6 +696,24 @@ function isDeadlinePassed(dl) {
 }
 
 // ═══════════════════════════════════════
+//  LOCAL STORAGE — ORGANIZER TRACKING
+// ═══════════════════════════════════════
+
+function storeCreatedPoll(pollId) {
+  try {
+    const ids = JSON.parse(localStorage.getItem('wf_created') || '[]');
+    if (!ids.includes(pollId)) ids.push(pollId);
+    localStorage.setItem('wf_created', JSON.stringify(ids.slice(-100)));
+  } catch(e) {}
+}
+
+function isCreatedPoll(pollId) {
+  try {
+    return JSON.parse(localStorage.getItem('wf_created') || '[]').includes(pollId);
+  } catch(e) { return false; }
+}
+
+// ═══════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════
 
@@ -713,6 +739,46 @@ function buildShareURL(pollId) {
 // ═══════════════════════════════════════
 
 let calState = { year: 0, month: 0, rangeStart: null, rangeEnd: null };
+let editMode = { active: false, pollId: null };
+
+function enterEditMode() {
+  const { poll, pollId } = appState;
+  editMode.active = true;
+  editMode.pollId = pollId;
+
+  showView('organizer');
+  initOrganizer();
+
+  document.getElementById('org-name').value = poll.n;
+  document.getElementById('org-desc').value = poll.d || '';
+  document.getElementById('org-tz').value = poll.tz;
+  if (poll.dl) document.getElementById('org-deadline').value = poll.dl;
+  if (poll.total) document.getElementById('org-total').value = poll.total;
+
+  if (poll.type === 'options') {
+    orgOptions = poll.options.map(o => ({ ...o }));
+    switchPollType('options');
+    renderOptionsBuilder();
+  } else {
+    calState.rangeStart = poll.dates[0];
+    calState.rangeEnd = poll.dates[poll.dates.length - 1];
+    document.getElementById('org-start-time').value = poll.sh;
+    document.getElementById('org-end-time').value = poll.eh;
+    renderCalendar();
+    updateDateSelectionLabel();
+  }
+
+  document.getElementById('org-form-title').textContent = 'Edit Poll';
+  document.getElementById('org-submit-btn').textContent = 'Save Changes →';
+  document.getElementById('org-share-panel').style.display = 'none';
+  document.getElementById('edit-back-btn').style.display = '';
+  document.getElementById('fabCopy').style.display = 'none';
+}
+
+function exitEditMode() {
+  editMode.active = false;
+  showView('respond');
+}
 
 function initOrganizer() {
   const now = new Date();
@@ -720,6 +786,17 @@ function initOrganizer() {
   calState.month = now.getMonth();
   calState.rangeStart = null;
   calState.rangeEnd = null;
+  orgPollType = 'grid';
+  orgOptions = [];
+
+  document.getElementById('org-form-title').textContent = 'Create a Poll';
+  document.getElementById('org-submit-btn').textContent = 'Create Poll →';
+  document.getElementById('edit-back-btn').style.display = 'none';
+  document.getElementById('org-name').value = '';
+  document.getElementById('org-desc').value = '';
+  document.getElementById('org-deadline').value = '';
+  document.getElementById('org-total').value = '';
+  switchPollType('grid');
 
   renderCalendar();
   populateTimeSelects();
@@ -936,19 +1013,30 @@ async function createPoll() {
       pollData.eh = endH;
     }
 
-    const docRef = await db.collection('polls').add(pollData);
-
-    const url = buildShareURL(docRef.id);
-    document.getElementById('org-share-url').textContent = url;
-    document.getElementById('org-share-panel').style.display = 'block';
-    document.getElementById('org-share-panel').scrollIntoView({ behavior: 'smooth' });
-    window._shareURL = url;
-    document.getElementById('fabCopy').style.display = 'flex';
+    if (editMode.active) {
+      delete pollData.createdAt;
+      await db.collection('polls').doc(editMode.pollId).update(pollData);
+      const snap = await db.collection('polls').doc(editMode.pollId).get();
+      editMode.active = false;
+      fillSlots = {};
+      showView('respond');
+      initRespondent(editMode.pollId, snap.data());
+      toast('Poll updated ✓');
+    } else {
+      const docRef = await db.collection('polls').add(pollData);
+      storeCreatedPoll(docRef.id);
+      const url = buildShareURL(docRef.id);
+      document.getElementById('org-share-url').textContent = url;
+      document.getElementById('org-share-panel').style.display = 'block';
+      document.getElementById('org-share-panel').scrollIntoView({ behavior: 'smooth' });
+      window._shareURL = url;
+      document.getElementById('fabCopy').style.display = 'flex';
+    }
   } catch (e) {
-    toast('Failed to create poll. Check your connection.');
+    toast('Failed to save poll. Check your connection.');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Create Poll →';
+    btn.textContent = editMode.active ? 'Save Changes →' : 'Create Poll →';
   }
 }
 
@@ -980,6 +1068,7 @@ function initRespondent(pollId, poll) {
   }
 
   renderEventHeader(poll);
+  document.getElementById('edit-poll-btn').style.display = isCreatedPoll(pollId) ? '' : 'none';
   document.getElementById('fabCopy').style.display = 'flex';
   window._shareURL = buildShareURL(pollId);
 
