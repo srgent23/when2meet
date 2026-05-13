@@ -282,6 +282,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 .tooltip-name { padding: 1px 0; }
 .tooltip-avail { color: var(--avail); }
 .tooltip-maybe { color: var(--maybe); }
+.tooltip-cant { color: var(--muted); }
 
 /* ── RESPONDENTS LIST ── */
 .respondents {
@@ -463,6 +464,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 }
 .opt-name-pill.avail { color: var(--avail); }
 .opt-name-pill.maybe { color: var(--maybe); }
+.opt-name-pill.cant { color: var(--muted); }
 </style>
 
 <!-- Firebase compat CDN -->
@@ -1173,9 +1175,9 @@ function labelToHour(label) {
 function slotsToFirestore(poll, slots) {
   const map = {};
   for (const [key, val] of Object.entries(slots)) {
-    if (!val) continue;
+    if (val === undefined || val === null) continue;
     const [di, h] = key.split('_').map(Number);
-    map[`${poll.dates[di]}_${formatHour(poll.sh + h)}`] = val === 1 ? 'available' : 'maybe';
+    map[`${poll.dates[di]}_${formatHour(poll.sh + h)}`] = val === 1 ? 'available' : val === 2 ? 'maybe' : 'cant';
   }
   return map;
 }
@@ -1190,7 +1192,7 @@ function slotsFromFirestore(poll, map) {
     const hour = labelToHour(key.slice(idx + 1));
     const di = poll.dates.indexOf(date);
     if (di === -1) continue;
-    slots[getSlotKey(di, hour - poll.sh)] = status === 'available' ? 1 : 2;
+    slots[getSlotKey(di, hour - poll.sh)] = status === 'available' ? 1 : status === 'maybe' ? 2 : 0;
   }
   return slots;
 }
@@ -1503,12 +1505,13 @@ function renderResults(poll, responses) {
     poll.dates.forEach((date, di) => {
       const key = getSlotKey(di, h);
       let score = 0;
-      const availNames = [], maybeNames = [];
+      const availNames = [], maybeNames = [], cantNames = [];
 
       responses.forEach(r => {
         const s = slotsFromFirestore(poll, r.slots);
         if (s[key] === 1) { score += 2; availNames.push(r.n); }
         else if (s[key] === 2) { score += 1; maybeNames.push(r.n); }
+        else if (s[key] === 0) { cantNames.push(r.n); }
       });
 
       const heatLevel = score === 0 ? 0 : Math.ceil((score / maxScore) * 5);
@@ -1528,14 +1531,14 @@ function renderResults(poll, responses) {
       }
 
       // Tooltip
-      if (availNames.length || maybeNames.length) {
+      if (availNames.length || maybeNames.length || cantNames.length) {
         const dateLabel = formatDateShort(date);
         const hourLabel = formatHour(hour);
-        cell.addEventListener('mouseenter', (e) => showTooltip(e, dateLabel, hourLabel, availNames, maybeNames));
+        cell.addEventListener('mouseenter', (e) => showTooltip(e, dateLabel, hourLabel, availNames, maybeNames, cantNames));
         cell.addEventListener('mouseleave', hideTooltip);
         cell.addEventListener('touchstart', (e) => {
           e.preventDefault();
-          showTooltip(e.touches[0], dateLabel, hourLabel, availNames, maybeNames);
+          showTooltip(e.touches[0], dateLabel, hourLabel, availNames, maybeNames, cantNames);
           setTimeout(hideTooltip, 2500);
         }, { passive: false });
       }
@@ -1545,7 +1548,7 @@ function renderResults(poll, responses) {
   }
 }
 
-function showTooltip(e, dateLabel, hourLabel, availNames, maybeNames) {
+function showTooltip(e, dateLabel, hourLabel, availNames, maybeNames, cantNames = []) {
   const tip = document.getElementById('tooltip');
   let html = `<div class="tooltip-time">${dateLabel} · ${hourLabel}</div>`;
   if (availNames.length) {
@@ -1557,6 +1560,12 @@ function showTooltip(e, dateLabel, hourLabel, availNames, maybeNames) {
   if (maybeNames.length) {
     html += `<div class="tooltip-section tooltip-maybe">~ Maybe</div>`;
     maybeNames.forEach(n => {
+      html += `<div class="tooltip-name">${escapeHTML(n)}</div>`;
+    });
+  }
+  if (cantNames.length) {
+    html += `<div class="tooltip-section tooltip-cant">✗ Can't</div>`;
+    cantNames.forEach(n => {
       html += `<div class="tooltip-name">${escapeHTML(n)}</div>`;
     });
   }
@@ -1810,8 +1819,8 @@ function formatOptionLabel(opt, longDate = false) {
 function optionSlotsToFirestore(slots) {
   const map = {};
   for (const [key, val] of Object.entries(slots)) {
-    if (!val) continue;
-    map[String(key)] = val === 1 ? 'available' : 'maybe';
+    if (val === undefined || val === null) continue;
+    map[String(key)] = val === 1 ? 'available' : val === 2 ? 'maybe' : 'cant';
   }
   return map;
 }
@@ -1821,7 +1830,7 @@ function optionSlotsFromFirestore(map) {
   const slots = {};
   for (const [key, status] of Object.entries(map)) {
     const idx = parseInt(key);
-    if (!isNaN(idx)) slots[idx] = status === 'available' ? 1 : 2;
+    if (!isNaN(idx)) slots[idx] = status === 'available' ? 1 : status === 'maybe' ? 2 : 0;
   }
   return slots;
 }
@@ -1855,16 +1864,17 @@ function renderOptionsVote(poll, responses) {
   poll.options.forEach((opt, idx) => {
     const label = formatOptionLabel(opt);
 
-    let availCount = 0, maybeCount = 0;
+    let availCount = 0, maybeCount = 0, cantCount = 0;
     responses.forEach(r => {
       const s = optionSlotsFromFirestore(r.slots);
       if (s[idx] === 1) availCount++;
       else if (s[idx] === 2) maybeCount++;
+      else if (s[idx] === 0) cantCount++;
     });
 
     const state = idx in fillSlots ? fillSlots[idx] : null;
-    const otherTotal = availCount + maybeCount;
-    const otherText = otherTotal > 0 ? `${availCount} available · ${maybeCount} maybe` : 'No votes yet';
+    const otherTotal = availCount + maybeCount + cantCount;
+    const otherText = otherTotal > 0 ? `${availCount} available · ${maybeCount} maybe · ${cantCount} can't` : 'No votes yet';
 
     const row = document.createElement('div');
     row.className = 'vote-row' + (state === 1 ? ' voted-avail' : state === 2 ? ' voted-maybe' : state === 0 ? ' voted-none' : '');
@@ -1940,11 +1950,12 @@ function renderOptionsResultsContent(poll, responses) {
     const label = formatOptionLabel(opt, true);
 
     let score = 0;
-    const availNames = [], maybeNames = [];
+    const availNames = [], maybeNames = [], cantNames = [];
     responses.forEach(r => {
       const s = optionSlotsFromFirestore(r.slots);
       if (s[idx] === 1) { score += 2; availNames.push(r.n); }
       else if (s[idx] === 2) { score += 1; maybeNames.push(r.n); }
+      else if (s[idx] === 0) { cantNames.push(r.n); }
     });
 
     const isBest = best && best.idx === idx;
@@ -1955,13 +1966,14 @@ function renderOptionsResultsContent(poll, responses) {
 
     const namePills = [
       ...availNames.map(n => `<span class="opt-name-pill avail">${icon('check',10)} ${escapeHTML(n)}</span>`),
-      ...maybeNames.map(n => `<span class="opt-name-pill maybe">${icon('minus',10)} ${escapeHTML(n)}</span>`)
+      ...maybeNames.map(n => `<span class="opt-name-pill maybe">${icon('minus',10)} ${escapeHTML(n)}</span>`),
+      ...cantNames.map(n => `<span class="opt-name-pill cant">${icon('x-mark',10)} ${escapeHTML(n)}</span>`)
     ].join('');
 
     row.innerHTML = `
       <div class="opt-result-label">${isBest ? icon('star',15)+' ' : ''}${label}</div>
       <div class="opt-result-bar-wrap"><div class="opt-result-bar" style="width:${barPct}%"></div></div>
-      <div class="opt-result-stats">${availNames.length} available · ${maybeNames.length} maybe</div>
+      <div class="opt-result-stats">${availNames.length} available · ${maybeNames.length} maybe · ${cantNames.length} can't</div>
       ${namePills ? `<div class="opt-result-names">${namePills}</div>` : ''}
     `;
     container.appendChild(row);
