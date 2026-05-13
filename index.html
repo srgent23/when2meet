@@ -29,6 +29,8 @@
   --avail-dim: rgba(6,214,160,0.15);
   --maybe: #ffd166;
   --maybe-dim: rgba(255,209,102,0.15);
+  --cant: #ff4757;
+  --cant-dim: rgba(255,71,87,0.15);
   --danger: #ff4757;
   --radius: 14px;
   --shadow: 0 4px 24px rgba(0,0,0,0.4);
@@ -282,7 +284,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 .tooltip-name { padding: 1px 0; }
 .tooltip-avail { color: var(--avail); }
 .tooltip-maybe { color: var(--maybe); }
-.tooltip-cant { color: var(--muted); }
+.tooltip-cant { color: var(--cant); }
 
 /* ── RESPONDENTS LIST ── */
 .respondents {
@@ -422,6 +424,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 }
 .vote-row.voted-avail { border-color: var(--avail); }
 .vote-row.voted-maybe { border-color: var(--maybe); }
+.vote-row.voted-none { border-color: var(--cant); }
 .vote-option-label { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
 .vote-other-count { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
 .vote-btn-group { display: flex; gap: 8px; }
@@ -464,7 +467,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 }
 .opt-name-pill.avail { color: var(--avail); }
 .opt-name-pill.maybe { color: var(--maybe); }
-.opt-name-pill.cant { color: var(--muted); }
+.opt-name-pill.cant { color: var(--cant); }
 </style>
 
 <!-- Firebase compat CDN -->
