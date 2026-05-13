@@ -434,7 +434,7 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted);
 .vote-btn:active { transform: scale(0.95); }
 .vote-btn.sel-avail { background: var(--avail-dim); border-color: var(--avail); color: var(--avail); }
 .vote-btn.sel-maybe { background: var(--maybe-dim); border-color: var(--maybe); color: var(--maybe); }
-.vote-btn.sel-none { background: var(--surface3); border-color: var(--surface3); color: var(--muted); }
+.vote-btn.sel-none { background: rgba(255,71,87,0.15); border-color: var(--danger); color: var(--danger); }
 
 /* ── OPTIONS RESULTS ── */
 .opt-result-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
@@ -1862,12 +1862,12 @@ function renderOptionsVote(poll, responses) {
       else if (s[idx] === 2) maybeCount++;
     });
 
-    const state = fillSlots[idx] || 0;
+    const state = idx in fillSlots ? fillSlots[idx] : null;
     const otherTotal = availCount + maybeCount;
     const otherText = otherTotal > 0 ? `${availCount} available · ${maybeCount} maybe` : 'No votes yet';
 
     const row = document.createElement('div');
-    row.className = 'vote-row' + (state === 1 ? ' voted-avail' : state === 2 ? ' voted-maybe' : '');
+    row.className = 'vote-row' + (state === 1 ? ' voted-avail' : state === 2 ? ' voted-maybe' : state === 0 ? ' voted-none' : '');
     row.id = `vr-${idx}`;
     row.innerHTML = `
       <div class="vote-option-label">${label}</div>
@@ -1885,13 +1885,14 @@ function renderOptionsVote(poll, responses) {
 }
 
 function setOptionVote(idx, val, e) {
-  if (e) { e.currentTarget.classList.add('pop'); setTimeout(() => e.currentTarget.classList.remove('pop'), 250); }
+  if (e && e.target) { e.target.classList.add('pop'); setTimeout(() => e.target.classList.remove('pop'), 250); }
   fillSlots[idx] = val;
   const row = document.getElementById(`vr-${idx}`);
   if (!row) return;
-  row.classList.remove('voted-avail', 'voted-maybe');
+  row.classList.remove('voted-avail', 'voted-maybe', 'voted-none');
   if (val === 1) row.classList.add('voted-avail');
   else if (val === 2) row.classList.add('voted-maybe');
+  else if (val === 0) row.classList.add('voted-none');
   const btns = row.querySelectorAll('.vote-btn');
   btns[0].className = 'vote-btn' + (val === 1 ? ' sel-avail' : '');
   btns[1].className = 'vote-btn' + (val === 2 ? ' sel-maybe' : '');
